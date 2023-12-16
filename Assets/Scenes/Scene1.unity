@@ -333,8 +333,7 @@ MonoBehaviour:
   smallerCubePrefab: {fileID: 8302258936430595562, guid: 4a8ae6626b6b9084584fbba2b471ee69, type: 3}
   whiteMaterial: {fileID: 2100000, guid: 43a375ddce84717459058ac3ba2a7653, type: 2}
   blackMaterial: {fileID: 2100000, guid: f0ff00f0a48b2bc4e8501bf34894079c, type: 2}
-  splitDistance: 2.1
-  scaleReductionFactor: 1
+  splitDistance: 3
 --- !u!4 &1320198453
 Transform:
   m_ObjectHideFlags: 0
