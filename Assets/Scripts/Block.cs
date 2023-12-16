@@ -7,7 +7,7 @@ public class Block : MonoBehaviour
     public GameObject closestBlockLeft;
     public GameObject closestBlockRight;
 
-    public float rayDistance = 5f;
+    public float rayDistance = 2f;
     public Color rayColor = Color.red;
 
     private Vector3 dragStartPos;
@@ -16,12 +16,14 @@ public class Block : MonoBehaviour
     private float dragThreshold = 10f; // Adjust this value to set the drag sensitivity
 
     private bool isDragging = false;
+    public bool isWhite, isBlack;
 
     BlockManager blockManager;
 
     private void Start()
     {
         blockManager = FindObjectOfType<BlockManager>();
+        rayDistance = transform.localScale.x * 0.5f;
         isDragging = false;
     }
     private void OnMouseDown()
@@ -77,7 +79,7 @@ public class Block : MonoBehaviour
                 else
                 {
                     // Drag up
-                    blockManager.Swipe(this.gameObject, closestBlockDown);
+                    blockManager.Swipe(this.gameObject, closestBlockUp);
                 }
             }
         }

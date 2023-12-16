@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 
 public class BlockManager : MonoBehaviour
@@ -9,35 +10,49 @@ public class BlockManager : MonoBehaviour
     public Material whiteMaterial;
     public Material blackMaterial;
 
-    bool isInvertedSwipe = false;
+    bool isInvertedSwipe;
+    int cubeNumber = 0;
 
-    //public float splitDistance = 1.0f;
+    private void Start()
+    {
+        isInvertedSwipe = false;
+    }
+    public void AllowInversion(bool isInvert)
+    {
+        isInvertedSwipe = isInvert;
+    }
     public void Split(GameObject obj)
     {
-        Vector3 originalPosition = obj.transform.position; 
+        Vector3 originalPosition = obj.transform.position;
+        Vector3 originalScale = obj.transform.localScale;
 
-        // When increasing the Scale for More cubes ensure it is divisible by 3 to allow easier split
-        float splitDistance = obj.transform.localScale.x;
-
-        if (obj.transform.localScale.x == 1)
-            splitDistance *= 0.5f;
-        else
-            splitDistance -= 1;
+        // When increasing the Scale for More cubes, ensure it is divisible by 3 to allow easier split
+        float splitFactor = 0.5f;
 
         for (int i = 0; i < 2; i++)
         {
             for (int j = 0; j < 2; j++)
             {
-                Vector3 spawnPosition = originalPosition + new Vector3((i - 0.5f) * splitDistance, (j - 0.5f) * splitDistance, 0f);
-                GameObject smallerCube = Instantiate(smallerCubePrefab, spawnPosition, Quaternion.identity);
+                Vector3 spawnPosition = originalPosition +
+                new Vector3((i - 0.5f) * originalScale.x * splitFactor,
+                            (j - 0.5f) * originalScale.y * splitFactor,
+                            0f);
+
+                GameObject smallerCube = Instantiate(smallerCubePrefab, originalPosition, Quaternion.identity);
+                smallerCube.name = "Cube " + cubeNumber;
                 Material cubeMaterial = (i + j) % 2 == 0 ? blackMaterial : whiteMaterial;
+                Block blockComponent = smallerCube.GetComponent<Block>();
+                blockComponent.isBlack = cubeMaterial == blackMaterial;
+                blockComponent.isWhite = cubeMaterial == whiteMaterial;
                 smallerCube.GetComponent<Renderer>().material = cubeMaterial;
-                smallerCube.transform.localScale = obj.transform.localScale.x == 1 ? obj.transform.localScale * 0.5f : obj.transform.localScale - new Vector3(1, 1, 1);
+                smallerCube.transform.localScale = originalScale * splitFactor;
+                cubeNumber++;
             }
         }
-        
+
         Destroy(obj);
     }
+
     public void Swipe(GameObject currentBlock, GameObject closestBlock)
     {
         if (closestBlock == null)
@@ -47,35 +62,35 @@ public class BlockManager : MonoBehaviour
         var curMat = currentBlock.GetComponent<Renderer>().material;
 
         //Neighbouring Block
+        var clstBlck = closestBlock.GetComponent<Block>();
         var closestBlockMaterial = closestBlock.gameObject.GetComponent<Renderer>().material;
+
+        // Check if the blocks are of the same type (color)
+        bool sameColor = curBlck.isWhite == clstBlck.isWhite || curBlck.isBlack == clstBlck.isBlack;
 
         // swiping to block should merge with the current block color
         if (closestBlock.transform.localScale.x > currentBlock.transform.localScale.x)
         {
             if (isInvertedSwipe)
             {
-                // The next cube must have an opposite color to allow merge
-                if (curMat == whiteMaterial)
+                Debug.Log(closestBlockMaterial.name);
+                // Inverted swipe logic
+                if (sameColor)
                 {
-                    closestBlockMaterial = blackMaterial;
+                    // The next cube must have an opposite color to allow merge
+                    closestBlockMaterial = curBlck.isWhite 
+                        ? closestBlock.gameObject.GetComponent<Renderer>().material = blackMaterial
+                        : closestBlock.gameObject.GetComponent<Renderer>().material = whiteMaterial;
                 }
-                else if (curMat == blackMaterial)
+                else
                 {
-                    closestBlockMaterial = whiteMaterial;
+                    return;
                 }
             }
             else
             {
-                // Next Cube takes the same material color if the currentblock has the same color as the next block
-                if(curMat == closestBlockMaterial)
-                {
-                    closestBlockMaterial = curMat;
-                    Debug.Log("Same Color!");
-                }
-                else
-                {
-                    Debug.Log("Not same Color!");
-                }
+                if (!sameColor)
+                    return;
             }
 
             // destroy the currentBlock
@@ -83,7 +98,7 @@ public class BlockManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("Small Size!");
+            Debug.Log("Can't Swipe, Big in Size!");
         }
     }
 }
