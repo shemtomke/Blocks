@@ -9,10 +9,20 @@ public class BlockManager : MonoBehaviour
     public Material whiteMaterial;
     public Material blackMaterial;
 
-    public float splitDistance = 1.0f;
+    bool isInvertedSwipe = false;
+
+    //public float splitDistance = 1.0f;
     public void Split(GameObject obj)
     {
-        Vector3 originalPosition = obj.transform.position;
+        Vector3 originalPosition = obj.transform.position; 
+
+        // When increasing the Scale for More cubes ensure it is divisible by 3 to allow easier split
+        float splitDistance = obj.transform.localScale.x;
+
+        if (obj.transform.localScale.x == 1)
+            splitDistance *= 0.5f;
+        else
+            splitDistance -= 1;
 
         for (int i = 0; i < 2; i++)
         {
@@ -28,12 +38,52 @@ public class BlockManager : MonoBehaviour
         
         Destroy(obj);
     }
-    public void Swipe()
+    public void Swipe(GameObject currentBlock, GameObject closestBlock)
     {
+        if (closestBlock == null)
+            return;
 
-    }
-    public void InvertedSwipe()
-    {
+        var curBlck = currentBlock.GetComponent<Block>();
+        var curMat = currentBlock.GetComponent<Renderer>().material;
 
+        //Neighbouring Block
+        var closestBlockMaterial = closestBlock.gameObject.GetComponent<Renderer>().material;
+
+        // swiping to block should merge with the current block color
+        if (closestBlock.transform.localScale.x > currentBlock.transform.localScale.x)
+        {
+            if (isInvertedSwipe)
+            {
+                // The next cube must have an opposite color to allow merge
+                if (curMat == whiteMaterial)
+                {
+                    closestBlockMaterial = blackMaterial;
+                }
+                else if (curMat == blackMaterial)
+                {
+                    closestBlockMaterial = whiteMaterial;
+                }
+            }
+            else
+            {
+                // Next Cube takes the same material color if the currentblock has the same color as the next block
+                if(curMat == closestBlockMaterial)
+                {
+                    closestBlockMaterial = curMat;
+                    Debug.Log("Same Color!");
+                }
+                else
+                {
+                    Debug.Log("Not same Color!");
+                }
+            }
+
+            // destroy the currentBlock
+            Destroy(currentBlock);
+        }
+        else
+        {
+            Debug.Log("Small Size!");
+        }
     }
 }

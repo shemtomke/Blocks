@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: -5519024102289919569}
   m_Layer: 0
   m_Name: SmallerCube
-  m_TagString: Untagged
+  m_TagString: Block
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -110,3 +110,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 692eb47c2dd25bf4caa66a79023af7c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  closestBlock: {fileID: 0}
+  rayDistance: 5
+  rayColor: {r: 1, g: 0, b: 0, a: 1}
