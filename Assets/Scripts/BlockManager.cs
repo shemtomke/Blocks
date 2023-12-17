@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using UnityEngine;
 
 public class BlockManager : MonoBehaviour
@@ -37,8 +38,8 @@ public class BlockManager : MonoBehaviour
                 {
                     Vector3 spawnPosition = originalPosition +
                     new Vector3((i - 0.5f) * originalScale.x * splitFactor,
-                               (j - 0.5f) * originalScale.y * splitFactor,
-                               (k - 0.5f) * originalScale.z * splitFactor); // Adjusted this line to include the z axis
+                              (j - 0.5f) * originalScale.y * splitFactor,
+                              (k - 0.5f) * originalScale.z * splitFactor); // Adjusted this line to include the z axis
 
                     GameObject smallerCube = Instantiate(smallerCubePrefab, spawnPosition, Quaternion.identity);
                     smallerCube.name = "Cube " + cubeNumber;
@@ -48,6 +49,13 @@ public class BlockManager : MonoBehaviour
                     blockComponent.isWhite = cubeMaterial == whiteMaterial;
                     smallerCube.GetComponent<Renderer>().material = cubeMaterial;
                     smallerCube.transform.localScale = originalScale * splitFactor;
+
+                    // If the cube number is not divisible by 2, disable or destroy the cube
+                    if (cubeNumber % 2 != 0)
+                    {
+                        Destroy(smallerCube);
+                    }
+
                     cubeNumber++;
                 }
             }
@@ -71,29 +79,41 @@ public class BlockManager : MonoBehaviour
         // Check if the blocks are of the same type (color)
         bool sameColor = curBlck.isWhite == clstBlck.isWhite || curBlck.isBlack == clstBlck.isBlack;
 
-        // swiping to block should merge with the current block color
-        if (closestBlock.transform.localScale.x > currentBlock.transform.localScale.x)
+        // The merging block has to be the same or smaller size than the block it merges into.
+        if (closestBlock.transform.localScale.x >= currentBlock.transform.localScale.x)
         {
             if (isInvertedSwipe)
             {
-                Debug.Log(closestBlockMaterial.name);
                 // Inverted swipe logic
                 if (sameColor)
                 {
                     // The next cube must have an opposite color to allow merge
-                    closestBlockMaterial = curBlck.isWhite 
-                        ? closestBlock.gameObject.GetComponent<Renderer>().material = blackMaterial
-                        : closestBlock.gameObject.GetComponent<Renderer>().material = whiteMaterial;
+                    if(curBlck.isWhite)
+                    {
+                        closestBlock.gameObject.GetComponent<Renderer>().material = blackMaterial;
+                        clstBlck.isBlack = true;
+                        clstBlck.isWhite = false;
+                    }
+                    else
+                    {
+                        closestBlock.gameObject.GetComponent<Renderer>().material = whiteMaterial;
+                        clstBlck.isBlack = false;
+                        clstBlck.isWhite = true;
+                    }
                 }
                 else
                 {
+                    Debug.Log("Not Merging On Inverted!");
                     return;
                 }
             }
             else
             {
                 if (!sameColor)
+                {
+                    Debug.Log("Not Merging Normal!");
                     return;
+                } 
             }
 
             // destroy the currentBlock
@@ -108,4 +128,8 @@ public class BlockManager : MonoBehaviour
     {
         Application.Quit();
     }
+}
+public enum Colors
+{
+    White, Black
 }

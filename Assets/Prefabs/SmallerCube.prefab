@@ -51,7 +51,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8302258936430595562}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 2
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -114,7 +114,7 @@ MonoBehaviour:
   closestBlockDown: {fileID: 0}
   closestBlockLeft: {fileID: 0}
   closestBlockRight: {fileID: 0}
-  rayDistance: 2
+  rayDistance: 4
   rayColor: {r: 1, g: 0, b: 0, a: 1}
   isWhite: 0
   isBlack: 0

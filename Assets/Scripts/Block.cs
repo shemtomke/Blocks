@@ -23,7 +23,7 @@ public class Block : MonoBehaviour
     private void Start()
     {
         blockManager = FindObjectOfType<BlockManager>();
-        rayDistance = transform.localScale.x * 0.5f;
+        //rayDistance = transform.localScale.x * 0.5f;
         isDragging = false;
     }
     private void OnMouseDown()
