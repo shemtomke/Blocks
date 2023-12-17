@@ -33,20 +33,23 @@ public class BlockManager : MonoBehaviour
         {
             for (int j = 0; j < 2; j++)
             {
-                Vector3 spawnPosition = originalPosition +
-                new Vector3((i - 0.5f) * originalScale.x * splitFactor,
-                            (j - 0.5f) * originalScale.y * splitFactor,
-                            0f);
+                for (int k = 0; k < 2; k++) // Added this loop for the z axis
+                {
+                    Vector3 spawnPosition = originalPosition +
+                    new Vector3((i - 0.5f) * originalScale.x * splitFactor,
+                               (j - 0.5f) * originalScale.y * splitFactor,
+                               (k - 0.5f) * originalScale.z * splitFactor); // Adjusted this line to include the z axis
 
-                GameObject smallerCube = Instantiate(smallerCubePrefab, originalPosition, Quaternion.identity);
-                smallerCube.name = "Cube " + cubeNumber;
-                Material cubeMaterial = (i + j) % 2 == 0 ? blackMaterial : whiteMaterial;
-                Block blockComponent = smallerCube.GetComponent<Block>();
-                blockComponent.isBlack = cubeMaterial == blackMaterial;
-                blockComponent.isWhite = cubeMaterial == whiteMaterial;
-                smallerCube.GetComponent<Renderer>().material = cubeMaterial;
-                smallerCube.transform.localScale = originalScale * splitFactor;
-                cubeNumber++;
+                    GameObject smallerCube = Instantiate(smallerCubePrefab, spawnPosition, Quaternion.identity);
+                    smallerCube.name = "Cube " + cubeNumber;
+                    Material cubeMaterial = (i + j + k) % 2 == 0 ? blackMaterial : whiteMaterial; // Adjusted this line to include the z axis
+                    Block blockComponent = smallerCube.GetComponent<Block>();
+                    blockComponent.isBlack = cubeMaterial == blackMaterial;
+                    blockComponent.isWhite = cubeMaterial == whiteMaterial;
+                    smallerCube.GetComponent<Renderer>().material = cubeMaterial;
+                    smallerCube.transform.localScale = originalScale * splitFactor;
+                    cubeNumber++;
+                }
             }
         }
 
