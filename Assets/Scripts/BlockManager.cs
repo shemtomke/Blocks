@@ -104,4 +104,8 @@ public class BlockManager : MonoBehaviour
             Debug.Log("Can't Swipe, Big in Size!");
         }
     }
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
 }
