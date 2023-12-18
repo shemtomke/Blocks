@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BlockManager : MonoBehaviour
 {
@@ -11,8 +12,12 @@ public class BlockManager : MonoBehaviour
     public Material whiteMaterial;
     public Material blackMaterial;
 
+    public bool sameColorSplit = false;
     bool isInvertedSwipe;
     int cubeNumber = 0;
+    public int splitNumber = 0;
+
+    public Text splitUI;
 
     private void Start()
     {
@@ -22,10 +27,11 @@ public class BlockManager : MonoBehaviour
     {
         isInvertedSwipe = isInvert;
     }
-    public void Split(GameObject obj)
+    public void Split(GameObject obj) // White Split (Normal Split)
     {
         Vector3 originalPosition = obj.transform.position;
         Vector3 originalScale = obj.transform.localScale;
+        Block objBlock = obj.GetComponent<Block>();
 
         // When increasing the Scale for More cubes, ensure it is divisible by 3 to allow easier split
         float splitFactor = 0.5f;
@@ -43,7 +49,24 @@ public class BlockManager : MonoBehaviour
 
                     GameObject smallerCube = Instantiate(smallerCubePrefab, spawnPosition, Quaternion.identity);
                     smallerCube.name = "Cube " + cubeNumber;
-                    Material cubeMaterial = (i + j + k) % 2 == 0 ? blackMaterial : whiteMaterial; // Adjusted this line to include the z axis
+                    Material cubeMaterial = null;
+                    if(sameColorSplit)
+                    {
+                        // if white then split w, b
+                        if (objBlock.isWhite)
+                        {
+                            cubeMaterial = (i + j + k) % 2 == 0 ? blackMaterial : whiteMaterial;
+                        }
+                        // else black then b, w
+                        else if(objBlock.isBlack)
+                        {
+                            cubeMaterial = (i + j + k) % 2 == 0 ? whiteMaterial : blackMaterial;
+                        }
+                    }
+                    else
+                    {
+                        cubeMaterial = (i + j + k) % 2 == 0 ? blackMaterial : whiteMaterial;
+                    }
                     Block blockComponent = smallerCube.GetComponent<Block>();
                     blockComponent.isBlack = cubeMaterial == blackMaterial;
                     blockComponent.isWhite = cubeMaterial == whiteMaterial;
@@ -60,7 +83,8 @@ public class BlockManager : MonoBehaviour
                 }
             }
         }
-
+        splitNumber++;
+        splitUI.text = splitNumber.ToString();
         Destroy(obj);
     }
 
@@ -124,6 +148,9 @@ public class BlockManager : MonoBehaviour
             Debug.Log("Can't Swipe, Big in Size!");
         }
     }
+    // If during the game a block is away diagonally from everything move it closer to the closest neighbour.
+    // This is an in game mechanic outside of the player's control
+
     public void QuitGame()
     {
         Application.Quit();

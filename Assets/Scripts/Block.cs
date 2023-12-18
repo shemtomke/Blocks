@@ -7,6 +7,13 @@ public class Block : MonoBehaviour
     public GameObject closestBlockLeft;
     public GameObject closestBlockRight;
 
+    [Space(20)]
+
+    public GameObject closesBlockNorthWest;
+    public GameObject closesBlockNorthEast;
+    public GameObject closesBlockSouthEast;
+    public GameObject closesBlockSouthWest;
+
     public float rayDistance = 2f;
     public Color rayColor = Color.red;
 
@@ -91,6 +98,16 @@ public class Block : MonoBehaviour
         CastRay(Vector3.down, ref closestBlockDown);
         CastRay(Vector3.left, ref closestBlockLeft);
         CastRay(Vector3.right, ref closestBlockRight);
+
+        Vector3 northeastDiagonal = new Vector3(1f, 1f, 0f).normalized;
+        Vector3 northwestDiagonal = new Vector3(-1f, 1f, 0f).normalized;
+        Vector3 southeastDiagonal = new Vector3(1f, -1f, 0f).normalized;
+        Vector3 southwestDiagonal = new Vector3(-1f, -1f, 0f).normalized;
+
+        CastRay(northeastDiagonal, ref closesBlockNorthEast);
+        CastRay(northwestDiagonal, ref closesBlockNorthWest);
+        CastRay(southeastDiagonal, ref closesBlockSouthEast);
+        CastRay(southwestDiagonal, ref closesBlockSouthWest);
     }
     public void CastRay(Vector3 direction, ref GameObject closestBlock)
     {
