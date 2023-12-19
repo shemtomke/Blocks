@@ -503,7 +503,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -78.11}
+  m_AnchoredPosition: {x: 150, y: -78.109985}
   m_SizeDelta: {x: 300, y: 156.22}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &810553247
@@ -740,6 +740,7 @@ MonoBehaviour:
   smallerCubePrefab: {fileID: 8302258936430595562, guid: 4a8ae6626b6b9084584fbba2b471ee69, type: 3}
   whiteMaterial: {fileID: 2100000, guid: 43a375ddce84717459058ac3ba2a7653, type: 2}
   blackMaterial: {fileID: 2100000, guid: f0ff00f0a48b2bc4e8501bf34894079c, type: 2}
+  moveSpeed: 1
   sameColorSplit: 1
   splitNumber: 0
   splitUI: {fileID: 810553247}
@@ -872,6 +873,10 @@ MonoBehaviour:
   closestBlockDown: {fileID: 0}
   closestBlockLeft: {fileID: 0}
   closestBlockRight: {fileID: 0}
+  closesBlockNorthWest: {fileID: 0}
+  closesBlockNorthEast: {fileID: 0}
+  closesBlockSouthEast: {fileID: 0}
+  closesBlockSouthWest: {fileID: 0}
   rayDistance: 3
   rayColor: {r: 1, g: 0, b: 0, a: 1}
   isWhite: 0

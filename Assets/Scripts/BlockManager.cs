@@ -12,6 +12,8 @@ public class BlockManager : MonoBehaviour
     public Material whiteMaterial;
     public Material blackMaterial;
 
+    public float moveSpeed;
+
     public bool sameColorSplit = false;
     bool isInvertedSwipe;
     int cubeNumber = 0;
@@ -150,17 +152,75 @@ public class BlockManager : MonoBehaviour
     // This is an in game mechanic outside of the player's control
     public void MoveBlockCloser(Block currentBlock)
     {
+        GameObject closestBlockObject = null;
+        GameObject currentBlockObject = currentBlock.gameObject;
+
         // if you are missing all normal directions (Up, Down, Left, Right)
-        if(currentBlock.closestBlockDown == null && currentBlock.closestBlockLeft == null 
+        if (currentBlock.closestBlockDown == null && currentBlock.closestBlockLeft == null 
             && currentBlock.closestBlockRight == null && currentBlock.closestBlockUp == null)
         {
             // Check Diagonal Side
             if(currentBlock.closesBlockSouthEast != null || currentBlock.closesBlockNorthEast != null || 
                 currentBlock.closesBlockNorthWest != null || currentBlock.closesBlockSouthWest != null)
             {
-                Debug.Log("Diagonal Available to Move");
+                if (currentBlock.closesBlockSouthEast != null)
+                {
+                    closestBlockObject = currentBlock.closesBlockSouthEast;
+                }
+                else if (currentBlock.closesBlockNorthEast != null)
+                {
+                    closestBlockObject = currentBlock.closesBlockNorthEast;
+                }
+                else if (currentBlock.closesBlockNorthWest != null)
+                {
+                    closestBlockObject = currentBlock.closesBlockNorthWest;
+                }
+                else if (currentBlock.closesBlockSouthWest != null)
+                {
+                    closestBlockObject = currentBlock.closesBlockSouthWest;
+                }
+
+                Block closestBlock = closestBlockObject.GetComponent<Block>();
+
+                if (closestBlockObject.transform.localScale.x == currentBlock.transform.localScale.x)
+                {
+                    Debug.Log("Same Size!");
+                    Vector3 target = new Vector3(closestBlockObject.transform.position.x, currentBlockObject.transform.position.y, 
+                        currentBlockObject.transform.position.z);
+
+                    Move(currentBlockObject, target);
+                }
+                else if(currentBlock.transform.localScale.x > closestBlockObject.transform.localScale.x)
+                {
+                    Debug.Log("Current Block is Bigger Size!");
+                    var xValue = closestBlockObject.transform.position.x * 
+                        (currentBlockObject.transform.localScale.x / closestBlockObject.transform.localScale.x);
+
+                    Vector3 target = new Vector3(xValue, closestBlockObject.transform.position.y,
+                        closestBlockObject.transform.position.z);
+
+                    Move(currentBlockObject, target);
+                }
+                else if(closestBlockObject.transform.localScale.x > currentBlock.transform.localScale.x)
+                {
+                    Debug.Log("Closest Block is Bigger Size!");
+                    var xValue = currentBlockObject.transform.position.x - currentBlockObject.transform.localScale.x;
+
+                    Vector3 target = new Vector3(xValue, closestBlockObject.transform.position.y,
+                        closestBlockObject.transform.position.z);
+
+                    Move(currentBlockObject, target);
+                }
             }
         }
+    }
+    void Move(GameObject obj, Vector3 target)
+    {
+        // Calculate the new position using Vector3.Lerp
+        Vector3 newPosition = Vector3.Lerp(obj.transform.position, target, moveSpeed * Time.deltaTime);
+
+        // Set the object's position to the new calculated position
+        obj.transform.position = newPosition;
     }
     public void QuitGame()
     {

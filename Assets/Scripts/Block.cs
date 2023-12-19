@@ -31,7 +31,7 @@ public class Block : MonoBehaviour
     private void Start()
     {
         blockManager = FindObjectOfType<BlockManager>();
-        diagonalRay = (transform.localScale.x * 0.5f) + 0.1f;
+        diagonalRay = (transform.localScale.x * 1.2f);
         isDragging = false;
     }
     private void OnMouseDown()
