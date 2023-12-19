@@ -127,7 +127,6 @@ public class BlockManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("Not Merging On Inverted!");
                     return;
                 }
             }
@@ -135,7 +134,6 @@ public class BlockManager : MonoBehaviour
             {
                 if (!sameColor)
                 {
-                    Debug.Log("Not Merging Normal!");
                     return;
                 } 
             }
@@ -150,7 +148,20 @@ public class BlockManager : MonoBehaviour
     }
     // If during the game a block is away diagonally from everything move it closer to the closest neighbour.
     // This is an in game mechanic outside of the player's control
-
+    public void MoveBlockCloser(Block currentBlock)
+    {
+        // if you are missing all normal directions (Up, Down, Left, Right)
+        if(currentBlock.closestBlockDown == null && currentBlock.closestBlockLeft == null 
+            && currentBlock.closestBlockRight == null && currentBlock.closestBlockUp == null)
+        {
+            // Check Diagonal Side
+            if(currentBlock.closesBlockSouthEast != null || currentBlock.closesBlockNorthEast != null || 
+                currentBlock.closesBlockNorthWest != null || currentBlock.closesBlockSouthWest != null)
+            {
+                Debug.Log("Diagonal Available to Move");
+            }
+        }
+    }
     public void QuitGame()
     {
         Application.Quit();

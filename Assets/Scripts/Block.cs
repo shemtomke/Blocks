@@ -15,6 +15,7 @@ public class Block : MonoBehaviour
     public GameObject closesBlockSouthWest;
 
     public float rayDistance = 2f;
+    float diagonalRay;
     public Color rayColor = Color.red;
 
     private Vector3 dragStartPos;
@@ -30,7 +31,7 @@ public class Block : MonoBehaviour
     private void Start()
     {
         blockManager = FindObjectOfType<BlockManager>();
-        //rayDistance = transform.localScale.x * 0.5f;
+        diagonalRay = (transform.localScale.x * 0.5f) + 0.1f;
         isDragging = false;
     }
     private void OnMouseDown()
@@ -94,22 +95,29 @@ public class Block : MonoBehaviour
     private void Update()
     {
         // Cast rays in four directions from the center of the object
-        CastRay(Vector3.up, ref closestBlockUp);
-        CastRay(Vector3.down, ref closestBlockDown);
-        CastRay(Vector3.left, ref closestBlockLeft);
-        CastRay(Vector3.right, ref closestBlockRight);
+        CastRay(Vector3.up, ref closestBlockUp, rayDistance);
+        CastRay(Vector3.down, ref closestBlockDown, rayDistance);
+        CastRay(Vector3.left, ref closestBlockLeft, rayDistance);
+        CastRay(Vector3.right, ref closestBlockRight, rayDistance);
+
+        //Vector3 northeastDiagonal = new Vector3(90, 90, -90);
+        //Vector3 northwestDiagonal = new Vector3(-90, 90, -90);
+        //Vector3 southeastDiagonal = new Vector3(90, -90, -90);
+        //Vector3 southwestDiagonal = new Vector3(-90, -90, -90);
 
         Vector3 northeastDiagonal = new Vector3(1f, 1f, 0f).normalized;
         Vector3 northwestDiagonal = new Vector3(-1f, 1f, 0f).normalized;
         Vector3 southeastDiagonal = new Vector3(1f, -1f, 0f).normalized;
         Vector3 southwestDiagonal = new Vector3(-1f, -1f, 0f).normalized;
 
-        CastRay(northeastDiagonal, ref closesBlockNorthEast);
-        CastRay(northwestDiagonal, ref closesBlockNorthWest);
-        CastRay(southeastDiagonal, ref closesBlockSouthEast);
-        CastRay(southwestDiagonal, ref closesBlockSouthWest);
+        CastRay(northeastDiagonal, ref closesBlockNorthEast, diagonalRay);
+        CastRay(northwestDiagonal, ref closesBlockNorthWest, diagonalRay);
+        CastRay(southeastDiagonal, ref closesBlockSouthEast, diagonalRay);
+        CastRay(southwestDiagonal, ref closesBlockSouthWest, diagonalRay);
+
+        blockManager.MoveBlockCloser(this);
     }
-    public void CastRay(Vector3 direction, ref GameObject closestBlock)
+    public void CastRay(Vector3 direction, ref GameObject closestBlock, float rayDist)
     {
         // Calculate the ray origin at the center of the object
         Vector3 rayOrigin = transform.position;
@@ -118,11 +126,11 @@ public class Block : MonoBehaviour
         Ray ray = new Ray(rayOrigin, direction);
 
         // Draw the ray in the scene view for visualization
-        Debug.DrawRay(ray.origin, ray.direction * rayDistance, rayColor);
+        Debug.DrawRay(ray.origin, ray.direction * rayDist, rayColor);
 
         // Perform a raycast and update closestBlock if hit
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, rayDistance))
+        if (Physics.Raycast(ray, out hit, rayDist))
         {
             // Check if the hit object has the "Block" tag
             if (hit.collider.CompareTag("Block"))
