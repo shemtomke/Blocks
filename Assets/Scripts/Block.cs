@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class Block : MonoBehaviour
 {
+    public Vector3 initialPos;
+
     public GameObject closestBlockUp;
     public GameObject closestBlockDown;
     public GameObject closestBlockLeft;
@@ -33,6 +35,7 @@ public class Block : MonoBehaviour
         blockManager = FindObjectOfType<BlockManager>();
         diagonalRay = (transform.localScale.x * 1.2f);
         isDragging = false;
+        initialPos = transform.position;
     }
     private void OnMouseDown()
     {
@@ -110,10 +113,10 @@ public class Block : MonoBehaviour
         Vector3 southeastDiagonal = new Vector3(1f, -1f, 0f).normalized;
         Vector3 southwestDiagonal = new Vector3(-1f, -1f, 0f).normalized;
 
-        CastRay(northeastDiagonal, ref closesBlockNorthEast, diagonalRay);
-        CastRay(northwestDiagonal, ref closesBlockNorthWest, diagonalRay);
-        CastRay(southeastDiagonal, ref closesBlockSouthEast, diagonalRay);
-        CastRay(southwestDiagonal, ref closesBlockSouthWest, diagonalRay);
+        CastRay(northeastDiagonal, ref closesBlockNorthEast, rayDistance);
+        CastRay(northwestDiagonal, ref closesBlockNorthWest, rayDistance);
+        CastRay(southeastDiagonal, ref closesBlockSouthEast, rayDistance);
+        CastRay(southwestDiagonal, ref closesBlockSouthWest, rayDistance);
 
         blockManager.MoveBlockCloser(this);
     }

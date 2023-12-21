@@ -204,11 +204,12 @@ public class BlockManager : MonoBehaviour
                 else if(closestBlockObject.transform.localScale.x > currentBlock.transform.localScale.x)
                 {
                     Debug.Log("Closest Block is Bigger Size!");
-                    var xValue = currentBlockObject.transform.position.x - currentBlockObject.transform.localScale.x;
+                    var xValue = currentBlock.initialPos.x - currentBlockObject.transform.localScale.x;
 
                     Vector3 target = new Vector3(xValue, closestBlockObject.transform.position.y,
                         closestBlockObject.transform.position.z);
 
+                    Debug.Log("Target : " + target);
                     Move(currentBlockObject, target);
                 }
             }
