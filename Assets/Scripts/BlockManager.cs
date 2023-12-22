@@ -2,8 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEngine.GraphicsBuffer;
 
 public class BlockManager : MonoBehaviour
 {
@@ -159,6 +161,7 @@ public class BlockManager : MonoBehaviour
         if (currentBlock.closestBlockDown == null && currentBlock.closestBlockLeft == null 
             && currentBlock.closestBlockRight == null && currentBlock.closestBlockUp == null)
         {
+            Debug.Log("Found a close Block!");
             // Check Diagonal Side
             if(currentBlock.closesBlockSouthEast != null || currentBlock.closesBlockNorthEast != null || 
                 currentBlock.closesBlockNorthWest != null || currentBlock.closesBlockSouthWest != null)
@@ -182,46 +185,62 @@ public class BlockManager : MonoBehaviour
 
                 Block closestBlock = closestBlockObject.GetComponent<Block>();
 
+                Debug.Log("Closest Block : " + closestBlockObject.name);
+
                 if (closestBlockObject.transform.localScale.x == currentBlock.transform.localScale.x)
                 {
-                    Debug.Log("Same Size!");
-                    Vector3 target = new Vector3(closestBlockObject.transform.position.x, currentBlockObject.transform.position.y, 
-                        currentBlockObject.transform.position.z);
+                    Debug.Log("Same Size! " + closestBlock.name);
+                    float yValue = closestBlock.transform.position.y + closestBlock.transform.localScale.x;
 
-                    Move(currentBlockObject, target);
+                    currentBlock.target = new Vector3(closestBlockObject.transform.position.x, yValue,
+                        closestBlock.transform.position.z);
+                    currentBlock.isMove = true;
                 }
                 else if(currentBlock.transform.localScale.x > closestBlockObject.transform.localScale.x)
                 {
-                    Debug.Log("Current Block is Bigger Size!");
+                    Debug.Log("Current Block is Bigger Size! " + closestBlock.name);
                     var xValue = closestBlockObject.transform.position.x * 
                         (currentBlockObject.transform.localScale.x / closestBlockObject.transform.localScale.x);
 
-                    Vector3 target = new Vector3(xValue, closestBlockObject.transform.position.y,
+                    currentBlock.target = new Vector3(xValue, closestBlockObject.transform.position.y,
                         closestBlockObject.transform.position.z);
-
-                    Move(currentBlockObject, target);
+                    currentBlock.isMove = true;
                 }
                 else if(closestBlockObject.transform.localScale.x > currentBlock.transform.localScale.x)
                 {
-                    Debug.Log("Closest Block is Bigger Size!");
-                    var xValue = currentBlock.initialPos.x - currentBlockObject.transform.localScale.x;
+                    Debug.Log("Closest Block is Bigger Size! " + closestBlock.name);
+                    float scaleDiff = closestBlock.transform.localScale.x / currentBlock.transform.localScale.x;
+                    var xValue = currentBlock.initialPos.x - closestBlockObject.transform.localScale.x;
+                    var yValue1 = closestBlock.transform.localScale.x / scaleDiff;
+                    var yValue2 = closestBlock.transform.position.y + (yValue1 / scaleDiff);
+                    var yValue = (closestBlock.transform.localScale.x / scaleDiff) / scaleDiff;
 
-                    Vector3 target = new Vector3(xValue, closestBlockObject.transform.position.y,
-                        closestBlockObject.transform.position.z);
-
-                    Debug.Log("Target : " + target);
-                    Move(currentBlockObject, target);
+                    currentBlock.target = new Vector3(xValue, yValue, //-y because we need the value up
+                        currentBlockObject.transform.position.z);
+                    currentBlock.isMove = true;
                 }
             }
         }
+
+        if(currentBlock.isMove)
+        {
+            Move(currentBlock, currentBlock.target);
+        }
     }
-    void Move(GameObject obj, Vector3 target)
+    void Move(Block blck, Vector3 target)
     {
-        // Calculate the new position using Vector3.Lerp
-        Vector3 newPosition = Vector3.Lerp(obj.transform.position, target, moveSpeed * Time.deltaTime);
+        GameObject obj = blck.gameObject;
+        var pos = obj.transform.position;
 
         // Set the object's position to the new calculated position
-        obj.transform.position = newPosition;
+        obj.transform.position = Vector3.MoveTowards(pos, target, moveSpeed * Time.deltaTime);
+
+        if (Mathf.Approximately(pos.x, target.x) &&
+            Mathf.Approximately(pos.y, target.y) &&
+            Mathf.Approximately(pos.z, target.z))
+        {
+            blck.isMove = false;
+        }
     }
     public void QuitGame()
     {

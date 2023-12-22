@@ -20,6 +20,9 @@ public class Block : MonoBehaviour
     float diagonalRay;
     public Color rayColor = Color.red;
 
+    public bool isMove = false;
+    public Vector3 target;
+
     private Vector3 dragStartPos;
     private Vector3 dragEndPos;
 

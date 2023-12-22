@@ -869,6 +869,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 692eb47c2dd25bf4caa66a79023af7c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  initialPos: {x: 0, y: 0, z: 0}
   closestBlockUp: {fileID: 0}
   closestBlockDown: {fileID: 0}
   closestBlockLeft: {fileID: 0}
@@ -879,6 +880,8 @@ MonoBehaviour:
   closesBlockSouthWest: {fileID: 0}
   rayDistance: 3
   rayColor: {r: 1, g: 0, b: 0, a: 1}
+  isMove: 0
+  target: {x: 0, y: 0, z: 0}
   isWhite: 0
   isBlack: 1
 --- !u!1 &1575438934
