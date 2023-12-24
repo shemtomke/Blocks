@@ -1,7 +1,9 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Block : MonoBehaviour
 {
+    public Text splitUI;
     public Vector3 initialPos;
 
     public GameObject closestBlockUp;

@@ -15,13 +15,18 @@ public class BlockManager : MonoBehaviour
     public Material blackMaterial;
 
     public float moveSpeed;
+    public float padding;
+    float splitFactor = 0.5f;
 
     public bool sameColorSplit = false;
-    bool isInvertedSwipe;
+    public bool isInvertedSwipe;
     int cubeNumber = 0;
     public int splitNumber = 0;
 
-    public Text splitUI;
+    // For the Block Used to Split
+    Vector3 originalPosition;
+    Vector3 originalScale;
+    Block objBlock;
 
     private void Start()
     {
@@ -30,39 +35,59 @@ public class BlockManager : MonoBehaviour
     public void AllowInversion(bool isInvert)
     {
         isInvertedSwipe = isInvert;
-    }
-    public void Split(GameObject obj) // White Split (Normal Split)
-    {
-        Vector3 originalPosition = obj.transform.position;
-        Vector3 originalScale = obj.transform.localScale;
-        Block objBlock = obj.GetComponent<Block>();
 
-        // When increasing the Scale for More cubes, ensure it is divisible by 3 to allow easier split
-        float splitFactor = 0.5f;
+        sameColorSplit = isInvertedSwipe;
+    }
+    #region Split
+    public void Split(GameObject obj)
+    {
+        originalPosition = obj.transform.position;
+        originalScale = obj.transform.localScale;
+        objBlock = obj.GetComponent<Block>();
+
+        splitNumber++;
+        if (objBlock.isBlack) { objBlock.splitUI.color = UnityEngine.Color.white; }
+        else if (objBlock.isWhite) { objBlock.splitUI.color = UnityEngine.Color.black; }
+        objBlock.splitUI.gameObject.SetActive(true);
+        objBlock.splitUI.text = splitNumber.ToString();
+
+        // Wait for 1 second before starting the splitting process
+        Invoke("StartSplitting", 0.5f);
+    }
+    void StartSplitting()
+    {
+        SplitCubes(originalPosition, originalScale, objBlock, splitFactor);
+    }
+
+    // SplitCubes method that takes parameters
+    void SplitCubes(Vector3 position, Vector3 scale, Block block, float factor)
+    {
+        objBlock.splitUI.gameObject.SetActive(false);
 
         for (int i = 0; i < 2; i++)
         {
             for (int j = 0; j < 2; j++)
             {
-                for (int k = 0; k < 2; k++) // Added this loop for the z axis
+                for (int k = 0; k < 2; k++)
                 {
-                    Vector3 spawnPosition = originalPosition +
-                    new Vector3((i - 0.5f) * originalScale.x * splitFactor,
-                              (j - 0.5f) * originalScale.y * splitFactor,
-                              (k - 0.5f) * originalScale.z * splitFactor); // Adjusted this line to include the z axis
+                    Vector3 spawnPosition = position +
+                        new Vector3((i - 0.5f) * (scale.x * factor + padding),
+                                    (j - 0.5f) * (scale.y * factor + padding),
+                                    (k - 0.5f) * (scale.z * factor + padding));
 
                     GameObject smallerCube = Instantiate(smallerCubePrefab, spawnPosition, Quaternion.identity);
                     smallerCube.name = "Cube " + cubeNumber;
                     Material cubeMaterial = null;
-                    if(sameColorSplit)
+
+                    if (sameColorSplit)
                     {
                         // if white then split w, b
-                        if (objBlock.isWhite)
+                        if (block.isWhite)
                         {
                             cubeMaterial = (i + j + k) % 2 == 0 ? blackMaterial : whiteMaterial;
                         }
                         // else black then b, w
-                        else if(objBlock.isBlack)
+                        else if (block.isBlack)
                         {
                             cubeMaterial = (i + j + k) % 2 == 0 ? whiteMaterial : blackMaterial;
                         }
@@ -71,11 +96,12 @@ public class BlockManager : MonoBehaviour
                     {
                         cubeMaterial = (i + j + k) % 2 == 0 ? blackMaterial : whiteMaterial;
                     }
+
                     Block blockComponent = smallerCube.GetComponent<Block>();
                     blockComponent.isBlack = cubeMaterial == blackMaterial;
                     blockComponent.isWhite = cubeMaterial == whiteMaterial;
                     smallerCube.GetComponent<Renderer>().material = cubeMaterial;
-                    smallerCube.transform.localScale = originalScale * splitFactor;
+                    smallerCube.transform.localScale = scale * factor;
 
                     // If the cube number is not divisible by 2, disable or destroy the cube
                     if (cubeNumber % 2 != 0)
@@ -87,11 +113,10 @@ public class BlockManager : MonoBehaviour
                 }
             }
         }
-        splitNumber++;
-        splitUI.text = splitNumber.ToString();
-        Destroy(obj);
-    }
 
+        Destroy(objBlock.gameObject, 0.5f);
+    }
+    #endregion
     public void Swipe(GameObject currentBlock, GameObject closestBlock)
     {
         if (closestBlock == null)
@@ -154,7 +179,11 @@ public class BlockManager : MonoBehaviour
     // This is an in game mechanic outside of the player's control
     public void MoveBlockCloser(Block currentBlock)
     {
-        GameObject closestBlockObject = null;
+        if (!isInvertedSwipe)
+            return;
+
+        GameObject closestBlockObjectUp = null;
+        GameObject closestBlockObjectDown = null;
         GameObject currentBlockObject = currentBlock.gameObject;
 
         // if you are missing all normal directions (Up, Down, Left, Right)
@@ -168,56 +197,86 @@ public class BlockManager : MonoBehaviour
             {
                 if (currentBlock.closesBlockSouthEast != null)
                 {
-                    closestBlockObject = currentBlock.closesBlockSouthEast;
+                    closestBlockObjectDown = currentBlock.closesBlockSouthEast;
                 }
                 else if (currentBlock.closesBlockNorthEast != null)
                 {
-                    closestBlockObject = currentBlock.closesBlockNorthEast;
+                    closestBlockObjectUp = currentBlock.closesBlockNorthEast;
                 }
                 else if (currentBlock.closesBlockNorthWest != null)
                 {
-                    closestBlockObject = currentBlock.closesBlockNorthWest;
+                    closestBlockObjectUp = currentBlock.closesBlockNorthWest;
                 }
                 else if (currentBlock.closesBlockSouthWest != null)
                 {
-                    closestBlockObject = currentBlock.closesBlockSouthWest;
+                    closestBlockObjectDown = currentBlock.closesBlockSouthWest;
                 }
 
-                Block closestBlock = closestBlockObject.GetComponent<Block>();
-
-                Debug.Log("Closest Block : " + closestBlockObject.name);
-
-                if (closestBlockObject.transform.localScale.x == currentBlock.transform.localScale.x)
+                if(closestBlockObjectDown != null)
                 {
-                    Debug.Log("Same Size! " + closestBlock.name);
-                    float yValue = closestBlock.transform.position.y + closestBlock.transform.localScale.x;
+                    Block closestBlockDown = closestBlockObjectDown.GetComponent<Block>();
 
-                    currentBlock.target = new Vector3(closestBlockObject.transform.position.x, yValue,
-                        closestBlock.transform.position.z);
-                    currentBlock.isMove = true;
+                    if (closestBlockObjectDown.transform.localScale.x == currentBlock.transform.localScale.x)
+                    {
+                        float yValue = closestBlockDown.transform.position.y + closestBlockDown.transform.localScale.x;
+
+                        currentBlock.target = new Vector3(closestBlockDown.transform.position.x, yValue, closestBlockDown.transform.position.z);
+                        currentBlock.isMove = true;
+                    }
+                    else if (currentBlock.transform.localScale.x > closestBlockDown.transform.localScale.x)
+                    {
+                        var scaleDiff = currentBlockObject.gameObject.transform.localScale.x / closestBlockObjectDown.gameObject.transform.localScale.x;
+
+                        var xInc = scaleDiff + (scaleDiff / 2);
+                        var xValue = currentBlockObject.transform.localScale.x * xInc;
+                        var yValue = currentBlock.transform.localScale.x * (scaleDiff / 2);
+
+                        currentBlock.target = new Vector3(xValue, yValue, currentBlock.transform.position.z);
+                        currentBlock.isMove = true;
+                    }
+                    else if (closestBlockDown.transform.localScale.x > currentBlock.transform.localScale.x)
+                    {
+                        float scaleDiff = closestBlockDown.transform.localScale.x / currentBlock.transform.localScale.x;
+                        var xValue = currentBlock.initialPos.x - closestBlockDown.transform.localScale.x;
+                        var yValue = closestBlockDown.transform.localScale.x / (scaleDiff * 2);
+
+                        currentBlock.target = new Vector3(xValue, yValue, currentBlockObject.transform.position.z);
+                        currentBlock.isMove = true;
+                    }
                 }
-                else if(currentBlock.transform.localScale.x > closestBlockObject.transform.localScale.x)
+                else if(closestBlockObjectUp != null)
                 {
-                    Debug.Log("Current Block is Bigger Size! " + closestBlock.name);
-                    var xValue = closestBlockObject.transform.position.x * 
-                        (currentBlockObject.transform.localScale.x / closestBlockObject.transform.localScale.x);
+                    Block closestBlockUp = closestBlockObjectUp.GetComponent<Block>();
 
-                    currentBlock.target = new Vector3(xValue, closestBlockObject.transform.position.y,
-                        closestBlockObject.transform.position.z);
-                    currentBlock.isMove = true;
-                }
-                else if(closestBlockObject.transform.localScale.x > currentBlock.transform.localScale.x)
-                {
-                    Debug.Log("Closest Block is Bigger Size! " + closestBlock.name);
-                    float scaleDiff = closestBlock.transform.localScale.x / currentBlock.transform.localScale.x;
-                    var xValue = currentBlock.initialPos.x - closestBlockObject.transform.localScale.x;
-                    var yValue1 = closestBlock.transform.localScale.x / scaleDiff;
-                    var yValue2 = closestBlock.transform.position.y + (yValue1 / scaleDiff);
-                    var yValue = (closestBlock.transform.localScale.x / scaleDiff) / scaleDiff;
+                    if (closestBlockObjectUp.transform.localScale.x == currentBlock.transform.localScale.x)
+                    {
+                        // This is for bottom
+                        float yValue = closestBlockUp.transform.position.y - closestBlockUp.transform.localScale.x;
 
-                    currentBlock.target = new Vector3(xValue, yValue, //-y because we need the value up
-                        currentBlockObject.transform.position.z);
-                    currentBlock.isMove = true;
+                        currentBlock.target = new Vector3(closestBlockUp.transform.position.x, yValue, closestBlockUp.transform.position.z);
+                        currentBlock.isMove = true;
+                    }
+                    else if (currentBlock.transform.localScale.x > closestBlockUp.transform.localScale.x)
+                    {
+                        Debug.Log("Current Block is Bigger Size! " + closestBlockUp.name);
+                        var scaleDiff = currentBlockObject.gameObject.transform.localScale.x / closestBlockUp.gameObject.transform.localScale.x;
+
+                        var xValue = - currentBlockObject.transform.localScale.x;
+                        var yValue = - (currentBlockObject.transform.localScale.x * (scaleDiff / 2));
+
+                        currentBlock.target = new Vector3(xValue, yValue, currentBlock.transform.position.z);
+                        currentBlock.isMove = true;
+                    }
+                    else if (closestBlockUp.transform.localScale.x > currentBlock.transform.localScale.x)
+                    {
+                        Debug.Log("Closest Block is Bigger Size! " + closestBlockUp.name);
+                        float scaleDiff = closestBlockUp.transform.localScale.x / currentBlock.transform.localScale.x;
+                        var xValue = currentBlock.initialPos.x - closestBlockUp.transform.localScale.x;
+                        var yValue = closestBlockUp.transform.localScale.x / (scaleDiff * 2);
+
+                        currentBlock.target = new Vector3(xValue, yValue, currentBlockObject.transform.position.z);
+                        currentBlock.isMove = true;
+                    }
                 }
             }
         }
@@ -241,6 +300,11 @@ public class BlockManager : MonoBehaviour
         {
             blck.isMove = false;
         }
+    }
+    // Get Majority Of Blocks
+    void FindMajority()
+    {
+        
     }
     public void QuitGame()
     {
