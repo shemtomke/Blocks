@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using static UnityEngine.GraphicsBuffer;
 
@@ -188,19 +189,11 @@ public class BlockManager : MonoBehaviour
     #region Move Block
     // If during the game a block is away diagonally from everything move it closer to the closest neighbour.
     // This is an in game mechanic outside of the player's control
-    public void MoveBlockCloser(Block currentBlock)
+    public void CheckDiagonalSide(Block currentBlock, GameObject closestBlockObjectDown, GameObject closestBlockObjectUp)
     {
-        if (!isInvertedSwipe)
+        if (currentBlock == null)
             return;
 
-        if (!currentBlock.isRayGap)
-            return;
-
-        GameObject closestBlockObjectUp = null;
-        GameObject closestBlockObjectDown = null;
-        GameObject currentBlockObject = currentBlock.gameObject;
-
-        // Check Diagonal Side
         if (currentBlock.closesBlockSouthEast != null)
         {
             closestBlockObjectDown = currentBlock.closesBlockSouthEast;
@@ -217,18 +210,59 @@ public class BlockManager : MonoBehaviour
         {
             closestBlockObjectDown = currentBlock.closesBlockSouthWest;
         }
+    }
+    public void CheckVerticalConnection(Block currentBlock, GameObject closestBlockObjectDown, GameObject closestBlockObjectUp)
+    {
+        if (closestBlockObjectDown != null)
+        {
+            Block closestBlockDown = closestBlockObjectDown.GetComponent<Block>();
+
+            // Check if there is no block on top
+            if (closestBlockDown.normalClosestBlockUp != null)
+            {
+                closestBlockObjectDown = currentBlock.closestBlockDown;
+            }
+        }
+        else if (closestBlockObjectUp != null)
+        {
+            Block closestBlockUp = closestBlockObjectUp.GetComponent<Block>();
+
+            // Check if there is no block in the bottom
+            if (closestBlockUp.normalClosestBlockDown != null)
+            {
+                closestBlockObjectDown = currentBlock.closestBlockUp;
+            }
+        }
+    }
+    public void CheckAvailableDiagonals(Block currentBlock, GameObject closestBlockObjectDown, GameObject closestBlockObjectUp)
+    {
+        if (currentBlock == null)
+            return;
 
         if (!currentBlock.isAvailableDiagonals)
         {
-            closestBlockObjectDown = currentBlock.closestBlockDown;
-            closestBlockObjectUp = currentBlock.closestBlockUp;
-            //closestBlockObjectDown = currentBlock.closestBlockLeft;
-            //closestBlockObjectDown = currentBlock.closestBlockRight;
+            if (currentBlock.closestBlockDown != null)
+            {
+                closestBlockObjectDown = currentBlock.closestBlockDown;
+            }
+            else if (currentBlock.closestBlockUp != null)
+            {
+                closestBlockObjectUp = currentBlock.closestBlockUp;
+            }
+            else if (currentBlock.closestBlockRight != null)
+            {
+                closestBlockObjectUp = currentBlock.closesBlockNorthWest;
+            }
+            else if (currentBlock.closestBlockLeft != null)
+            {
+                closestBlockObjectDown = currentBlock.closesBlockSouthWest;
+            }
         }
-
+    }
+    void PositionBlockDown(Block currentBlock, GameObject closestBlockObjectDown)
+    {
         if (closestBlockObjectDown != null)
         {
-            Debug.Log("Closest Block Down : " + closestBlockObjectDown.name);
             Block closestBlockDown = closestBlockObjectDown.GetComponent<Block>();
 
             if (closestBlockObjectDown.transform.localScale.x == currentBlock.transform.localScale.x)
@@ -240,10 +274,10 @@ public class BlockManager : MonoBehaviour
             }
             else if (currentBlock.transform.localScale.x > closestBlockDown.transform.localScale.x)
             {
-                var scaleDiff = currentBlockObject.gameObject.transform.localScale.x / closestBlockObjectDown.gameObject.transform.localScale.x;
+                var scaleDiff = currentBlock.gameObject.transform.localScale.x / closestBlockObjectDown.gameObject.transform.localScale.x;
 
                 var xInc = scaleDiff + (scaleDiff / 2);
-                var xValue = currentBlockObject.transform.localScale.x * xInc;
+                var xValue = currentBlock.transform.localScale.x * xInc;
                 var yValue = currentBlock.transform.localScale.x * (scaleDiff / 2);
 
                 currentBlock.target = new Vector3(xValue, yValue + padding, currentBlock.transform.position.z);
@@ -255,11 +289,14 @@ public class BlockManager : MonoBehaviour
                 var xValue = currentBlock.initialPos.x - closestBlockDown.transform.localScale.x;
                 var yValue = closestBlockDown.transform.localScale.x / (scaleDiff * 2);
 
-                currentBlock.target = new Vector3(xValue, yValue + padding, currentBlockObject.transform.position.z);
+                currentBlock.target = new Vector3(xValue, yValue + padding, currentBlock.transform.position.z);
                 currentBlock.isMove = true;
             }
         }
-        else if (closestBlockObjectUp != null)
+    }
+    void PositionBlockUp(Block currentBlock, GameObject closestBlockObjectUp)
+    {
+        if (closestBlockObjectUp != null)
         {
             Debug.Log("Closest Block Up : " + closestBlockObjectUp.name);
             Block closestBlockUp = closestBlockObjectUp.GetComponent<Block>();
@@ -274,10 +311,10 @@ public class BlockManager : MonoBehaviour
             else if (currentBlock.transform.localScale.x > closestBlockUp.transform.localScale.x)
             {
                 Debug.Log("Current Block is Bigger Size! " + closestBlockUp.name);
-                var scaleDiff = currentBlockObject.gameObject.transform.localScale.x / closestBlockUp.gameObject.transform.localScale.x;
+                var scaleDiff = currentBlock.gameObject.transform.localScale.x / closestBlockUp.gameObject.transform.localScale.x;
 
-                var xValue = -currentBlockObject.transform.localScale.x;
-                var yValue = -(currentBlockObject.transform.localScale.x * (scaleDiff / 2));
+                var xValue = -currentBlock.transform.localScale.x;
+                var yValue = -(currentBlock.transform.localScale.x * (scaleDiff / 2));
 
                 currentBlock.target = new Vector3(xValue, yValue - padding, currentBlock.transform.position.z);
                 currentBlock.isMove = true;
@@ -289,11 +326,13 @@ public class BlockManager : MonoBehaviour
                 var xValue = currentBlock.initialPos.x - closestBlockUp.transform.localScale.x;
                 var yValue = closestBlockUp.transform.localScale.x / (scaleDiff * 2);
 
-                currentBlock.target = new Vector3(xValue, yValue - padding, currentBlockObject.transform.position.z);
+                currentBlock.target = new Vector3(xValue, yValue - padding, currentBlock.transform.position.z);
                 currentBlock.isMove = true;
             }
         }
-
+    }
+    void PrepareMove(Block currentBlock)
+    {
         if (currentBlock.isMove)
         {
             Move(currentBlock, currentBlock.target);
@@ -301,6 +340,30 @@ public class BlockManager : MonoBehaviour
             if (CannotMoveToNewPosition(currentBlock))
                 Debug.Log("Can Move!");
         }
+    }
+    public void MoveBlockCloser(Block currentBlock)
+    {
+        // This Move Closer only works when inverted swipe is enabled
+        if (!isInvertedSwipe)
+            return;
+
+        // When the Block has a Ray Gap - Meaning the other blocks are far away
+        if (!currentBlock.isRayGap)
+            return;
+
+        GameObject closestBlockObjectUp = null;
+        GameObject closestBlockObjectDown = null;
+
+        // Check Diagonal Side
+        CheckDiagonalSide(currentBlock, closestBlockObjectDown, closestBlockObjectUp);
+        CheckAvailableDiagonals(currentBlock, closestBlockObjectDown, closestBlockObjectUp);
+        CheckVerticalConnection(currentBlock, closestBlockObjectDown, closestBlockObjectUp);
+
+        // Position Blocks
+        PositionBlockUp(currentBlock, closestBlockObjectUp);
+        PositionBlockDown(currentBlock, closestBlockObjectDown);
+
+        PrepareMove(currentBlock);
     }
     void Move(Block blck, Vector3 target)
     {
@@ -320,7 +383,7 @@ public class BlockManager : MonoBehaviour
     }
     bool CannotMoveToNewPosition(Block block)
     {
-        float positionTolerance = 0.001f; // Adjust the tolerance as needed
+        float positionTolerance = 0.001f;
 
         for (int i = 0; i < allBlocks.Count; i++)
         {
@@ -354,6 +417,11 @@ public class BlockManager : MonoBehaviour
             if (allBlocks[i] == null)
                 allBlocks.Remove(allBlocks[i]);
         }
+    }
+    public void ResetGame()
+    {
+        Scene currentScene = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(currentScene.name);
     }
     public void QuitGame()
     {

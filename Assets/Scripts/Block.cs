@@ -116,14 +116,16 @@ public class Block : MonoBehaviour
     }
     private void Update()
     {
-        // Cast rays in four directions from the center of the object
-        CastRay(Vector3.up, ref closestBlockUp, rayDistance);
-        CastRay(Vector3.down, ref closestBlockDown, rayDistance);
-        CastRay(Vector3.left, ref closestBlockLeft, rayDistance);
-        CastRay(Vector3.right, ref closestBlockRight, rayDistance);
+        
 
         if(!isMove)
         {
+            // Cast rays in four directions from the center of the object
+            CastRay(Vector3.up, ref closestBlockUp, rayDistance);
+            CastRay(Vector3.down, ref closestBlockDown, rayDistance);
+            CastRay(Vector3.left, ref closestBlockLeft, rayDistance);
+            CastRay(Vector3.right, ref closestBlockRight, rayDistance);
+
             // This will show if we have a gap with the next cube if null
             NormalCastRay(Vector3.up, ref normalClosestBlockUp, rayGap);
             NormalCastRay(Vector3.down, ref normalClosestBlockDown, rayGap);
