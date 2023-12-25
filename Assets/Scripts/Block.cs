@@ -6,10 +6,17 @@ public class Block : MonoBehaviour
     public Text splitUI;
     public Vector3 initialPos;
 
+    [Space(10)]
     public GameObject closestBlockUp;
     public GameObject closestBlockDown;
     public GameObject closestBlockLeft;
     public GameObject closestBlockRight;
+
+    [Space(20)]
+    public GameObject normalClosestBlockUp;
+    public GameObject normalClosestBlockDown;
+    public GameObject normalClosestBlockLeft;
+    public GameObject normalClosestBlockRight;
 
     [Space(20)]
 
@@ -18,18 +25,21 @@ public class Block : MonoBehaviour
     public GameObject closesBlockSouthEast;
     public GameObject closesBlockSouthWest;
 
+    [Space(10)]
     public float rayDistance = 2f;
+    public float rayGap;
+    private float dragThreshold = 10f; // Adjust this value to set the drag sensitivity
     float diagonalRay;
+
+    public int connectedBlocks = 0;
+
     public Color rayColor = Color.red;
 
-    public bool isMove = false;
     public Vector3 target;
-
     private Vector3 dragStartPos;
     private Vector3 dragEndPos;
 
-    private float dragThreshold = 10f; // Adjust this value to set the drag sensitivity
-
+    public bool isMove = false;
     private bool isDragging = false;
     public bool isWhite, isBlack;
 
@@ -38,7 +48,10 @@ public class Block : MonoBehaviour
     private void Start()
     {
         blockManager = FindObjectOfType<BlockManager>();
+
+        rayGap = transform.localScale.x;
         diagonalRay = (transform.localScale.x * 1.2f);
+
         isDragging = false;
         initialPos = transform.position;
     }
@@ -52,7 +65,6 @@ public class Block : MonoBehaviour
         if (!isDragging)
         {
             // If it's not a drag (within the threshold), consider it a click
-            Debug.Log("Split the Cube!");
             blockManager.Split(this.gameObject);
         }
 
@@ -108,11 +120,13 @@ public class Block : MonoBehaviour
         CastRay(Vector3.left, ref closestBlockLeft, rayDistance);
         CastRay(Vector3.right, ref closestBlockRight, rayDistance);
 
-        //Vector3 northeastDiagonal = new Vector3(90, 90, -90);
-        //Vector3 northwestDiagonal = new Vector3(-90, 90, -90);
-        //Vector3 southeastDiagonal = new Vector3(90, -90, -90);
-        //Vector3 southwestDiagonal = new Vector3(-90, -90, -90);
+        // This will show if we have a gap with the next cube if null
+        CastRay(Vector3.up, ref normalClosestBlockUp, rayGap);
+        CastRay(Vector3.down, ref normalClosestBlockDown, rayGap);
+        CastRay(Vector3.left, ref normalClosestBlockLeft, rayGap);
+        CastRay(Vector3.right, ref normalClosestBlockRight, rayGap);
 
+        // This will allow movement to the neighbouring block
         Vector3 northeastDiagonal = new Vector3(1f, 1f, 0f).normalized;
         Vector3 northwestDiagonal = new Vector3(-1f, 1f, 0f).normalized;
         Vector3 southeastDiagonal = new Vector3(1f, -1f, 0f).normalized;
@@ -123,6 +137,10 @@ public class Block : MonoBehaviour
         CastRay(southeastDiagonal, ref closesBlockSouthEast, rayDistance);
         CastRay(southwestDiagonal, ref closesBlockSouthWest, rayDistance);
 
+        if(IsRayGapEmpty())
+        {
+            
+        }
         blockManager.MoveBlockCloser(this);
     }
     public void CastRay(Vector3 direction, ref GameObject closestBlock, float rayDist)
@@ -146,5 +164,25 @@ public class Block : MonoBehaviour
                 closestBlock = hit.collider.gameObject;
             }
         }
+    }
+    // if the ray gap is empty then there is a gap between, meaning it should move to the closest neighbour
+    public bool IsRayGapEmpty()
+    {
+        if (normalClosestBlockUp == null && normalClosestBlockDown == null &&
+            normalClosestBlockLeft == null && normalClosestBlockRight == null)
+            return true;
+
+        return false;
+    }
+    public void GetConnectedBlocks()
+    {
+        if (normalClosestBlockUp != null)
+            connectedBlocks++;
+        if (normalClosestBlockDown != null)
+            connectedBlocks++;
+        if (normalClosestBlockLeft != null)
+            connectedBlocks++;
+        if (normalClosestBlockRight != null)
+            connectedBlocks++;
     }
 }

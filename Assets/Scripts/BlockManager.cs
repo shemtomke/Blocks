@@ -9,6 +9,7 @@ using static UnityEngine.GraphicsBuffer;
 
 public class BlockManager : MonoBehaviour
 {
+    public List<GameObject> allBlocks = new List<GameObject>();
     public GameObject smallerCubePrefab;
 
     public Material whiteMaterial;
@@ -20,8 +21,10 @@ public class BlockManager : MonoBehaviour
 
     public bool sameColorSplit = false;
     public bool isInvertedSwipe;
+
     int cubeNumber = 0;
     public int splitNumber = 0;
+    public int majorityBlocks;
 
     // For the Block Used to Split
     Vector3 originalPosition;
@@ -31,6 +34,10 @@ public class BlockManager : MonoBehaviour
     private void Start()
     {
         isInvertedSwipe = false;
+    }
+    private void Update()
+    {
+        UpdateAllBlocks();
     }
     public void AllowInversion(bool isInvert)
     {
@@ -108,15 +115,17 @@ public class BlockManager : MonoBehaviour
                     {
                         Destroy(smallerCube);
                     }
-
+                    allBlocks.Add(smallerCube.gameObject);
                     cubeNumber++;
                 }
             }
         }
 
-        Destroy(objBlock.gameObject, 0.5f);
+        Destroy(objBlock.gameObject);
     }
     #endregion
+
+    #region Swipe
     public void Swipe(GameObject currentBlock, GameObject closestBlock)
     {
         if (closestBlock == null)
@@ -166,7 +175,6 @@ public class BlockManager : MonoBehaviour
                     return;
                 } 
             }
-
             // destroy the currentBlock
             Destroy(currentBlock);
         }
@@ -175,6 +183,9 @@ public class BlockManager : MonoBehaviour
             Debug.Log("Can't Swipe, Big in Size!");
         }
     }
+    #endregion
+
+    #region Move Block
     // If during the game a block is away diagonally from everything move it closer to the closest neighbour.
     // This is an in game mechanic outside of the player's control
     public void MoveBlockCloser(Block currentBlock)
@@ -305,6 +316,23 @@ public class BlockManager : MonoBehaviour
     void FindMajority()
     {
         
+    }
+    void CheckRelatedMajorityBlocks()
+    {
+        for (int i = 0; i < allBlocks.Count; i++)
+        {
+            
+        }
+    }
+    #endregion
+
+    void UpdateAllBlocks()
+    {
+        for (int i = 0; i < allBlocks.Count; i++)
+        {
+            if (allBlocks[i] == null)
+                allBlocks.Remove(allBlocks[i]);
+        }
     }
     public void QuitGame()
     {
