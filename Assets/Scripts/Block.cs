@@ -40,6 +40,8 @@ public class Block : MonoBehaviour
     private Vector3 dragEndPos;
 
     public bool isMove = false;
+    public bool isRayGap = false;
+    public bool isAvailableDiagonals = false;
     private bool isDragging = false;
     public bool isWhite, isBlack;
 
@@ -120,27 +122,30 @@ public class Block : MonoBehaviour
         CastRay(Vector3.left, ref closestBlockLeft, rayDistance);
         CastRay(Vector3.right, ref closestBlockRight, rayDistance);
 
-        // This will show if we have a gap with the next cube if null
-        CastRay(Vector3.up, ref normalClosestBlockUp, rayGap);
-        CastRay(Vector3.down, ref normalClosestBlockDown, rayGap);
-        CastRay(Vector3.left, ref normalClosestBlockLeft, rayGap);
-        CastRay(Vector3.right, ref normalClosestBlockRight, rayGap);
-
-        // This will allow movement to the neighbouring block
-        Vector3 northeastDiagonal = new Vector3(1f, 1f, 0f).normalized;
-        Vector3 northwestDiagonal = new Vector3(-1f, 1f, 0f).normalized;
-        Vector3 southeastDiagonal = new Vector3(1f, -1f, 0f).normalized;
-        Vector3 southwestDiagonal = new Vector3(-1f, -1f, 0f).normalized;
-
-        CastRay(northeastDiagonal, ref closesBlockNorthEast, rayDistance);
-        CastRay(northwestDiagonal, ref closesBlockNorthWest, rayDistance);
-        CastRay(southeastDiagonal, ref closesBlockSouthEast, rayDistance);
-        CastRay(southwestDiagonal, ref closesBlockSouthWest, rayDistance);
-
-        if(IsRayGapEmpty())
+        if(!isMove)
         {
-            
+            // This will show if we have a gap with the next cube if null
+            NormalCastRay(Vector3.up, ref normalClosestBlockUp, rayGap);
+            NormalCastRay(Vector3.down, ref normalClosestBlockDown, rayGap);
+            NormalCastRay(Vector3.left, ref normalClosestBlockLeft, rayGap);
+            NormalCastRay(Vector3.right, ref normalClosestBlockRight, rayGap);
+
+            // This will allow movement to the neighbouring block
+            Vector3 northeastDiagonal = new Vector3(1f, 1f, 0f).normalized;
+            Vector3 northwestDiagonal = new Vector3(-1f, 1f, 0f).normalized;
+            Vector3 southeastDiagonal = new Vector3(1f, -1f, 0f).normalized;
+            Vector3 southwestDiagonal = new Vector3(-1f, -1f, 0f).normalized;
+
+            CastRay(northeastDiagonal, ref closesBlockNorthEast, rayDistance);
+            CastRay(northwestDiagonal, ref closesBlockNorthWest, rayDistance);
+            CastRay(southeastDiagonal, ref closesBlockSouthEast, rayDistance);
+            CastRay(southwestDiagonal, ref closesBlockSouthWest, rayDistance);
         }
+
+        AllRaysGapEmpty();
+        NoDiagonals();
+        AvailableDiagonals();
+
         blockManager.MoveBlockCloser(this);
     }
     public void CastRay(Vector3 direction, ref GameObject closestBlock, float rayDist)
@@ -165,14 +170,43 @@ public class Block : MonoBehaviour
             }
         }
     }
+    public void NormalCastRay(Vector3 direction, ref GameObject closestBlock, float rayDist)
+    {
+        // Calculate the ray origin at the center of the object
+        Vector3 rayOrigin = transform.position;
+
+        // Perform a raycast and update closestBlock if hit
+        RaycastHit hit;
+        if (Physics.BoxCast(rayOrigin, transform.lossyScale * 0.5f, direction, out hit, transform.rotation, rayDist))
+        {
+            Debug.DrawRay(transform.position, direction * hit.distance, Color.red);
+            // Check if the hit object has the "Block" tag
+            if (hit.collider.CompareTag("Block"))
+            {
+                closestBlock = hit.collider.gameObject;
+            }
+        }
+    }
+
     // if the ray gap is empty then there is a gap between, meaning it should move to the closest neighbour
-    public bool IsRayGapEmpty()
+    public void AllRaysGapEmpty()
     {
         if (normalClosestBlockUp == null && normalClosestBlockDown == null &&
             normalClosestBlockLeft == null && normalClosestBlockRight == null)
-            return true;
-
-        return false;
+            isRayGap = true;
+    }
+    // Check when we can't detect the diagonals 
+    public void NoDiagonals()
+    {
+        if (closesBlockNorthEast == null && closesBlockNorthWest == null &&
+            closesBlockSouthEast == null && closesBlockSouthWest == null)
+            isAvailableDiagonals = false;
+    }
+    public void AvailableDiagonals()
+    {
+        if (closesBlockNorthEast != null || closesBlockNorthWest != null ||
+            closesBlockSouthEast != null || closesBlockSouthWest != null)
+            isAvailableDiagonals = true;
     }
     public void GetConnectedBlocks()
     {

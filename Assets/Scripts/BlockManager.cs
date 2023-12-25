@@ -33,7 +33,7 @@ public class BlockManager : MonoBehaviour
 
     private void Start()
     {
-        isInvertedSwipe = false;
+        isInvertedSwipe = true;
     }
     private void Update()
     {
@@ -193,108 +193,113 @@ public class BlockManager : MonoBehaviour
         if (!isInvertedSwipe)
             return;
 
+        if (!currentBlock.isRayGap)
+            return;
+
         GameObject closestBlockObjectUp = null;
         GameObject closestBlockObjectDown = null;
         GameObject currentBlockObject = currentBlock.gameObject;
 
-        // if you are missing all normal directions (Up, Down, Left, Right)
-        if (currentBlock.closestBlockDown == null && currentBlock.closestBlockLeft == null 
-            && currentBlock.closestBlockRight == null && currentBlock.closestBlockUp == null)
+        // Check Diagonal Side
+        if (currentBlock.closesBlockSouthEast != null)
         {
-            Debug.Log("Found a close Block!");
-            // Check Diagonal Side
-            if(currentBlock.closesBlockSouthEast != null || currentBlock.closesBlockNorthEast != null || 
-                currentBlock.closesBlockNorthWest != null || currentBlock.closesBlockSouthWest != null)
+            closestBlockObjectDown = currentBlock.closesBlockSouthEast;
+        }
+        else if (currentBlock.closesBlockNorthEast != null)
+        {
+            closestBlockObjectUp = currentBlock.closesBlockNorthEast;
+        }
+        else if (currentBlock.closesBlockNorthWest != null)
+        {
+            closestBlockObjectUp = currentBlock.closesBlockNorthWest;
+        }
+        else if (currentBlock.closesBlockSouthWest != null)
+        {
+            closestBlockObjectDown = currentBlock.closesBlockSouthWest;
+        }
+
+        if (!currentBlock.isAvailableDiagonals)
+        {
+            closestBlockObjectDown = currentBlock.closestBlockDown;
+            closestBlockObjectUp = currentBlock.closestBlockUp;
+            //closestBlockObjectDown = currentBlock.closestBlockLeft;
+            //closestBlockObjectDown = currentBlock.closestBlockRight;
+        }
+
+        if (closestBlockObjectDown != null)
+        {
+            Debug.Log("Closest Block Down : " + closestBlockObjectDown.name);
+            Block closestBlockDown = closestBlockObjectDown.GetComponent<Block>();
+
+            if (closestBlockObjectDown.transform.localScale.x == currentBlock.transform.localScale.x)
             {
-                if (currentBlock.closesBlockSouthEast != null)
-                {
-                    closestBlockObjectDown = currentBlock.closesBlockSouthEast;
-                }
-                else if (currentBlock.closesBlockNorthEast != null)
-                {
-                    closestBlockObjectUp = currentBlock.closesBlockNorthEast;
-                }
-                else if (currentBlock.closesBlockNorthWest != null)
-                {
-                    closestBlockObjectUp = currentBlock.closesBlockNorthWest;
-                }
-                else if (currentBlock.closesBlockSouthWest != null)
-                {
-                    closestBlockObjectDown = currentBlock.closesBlockSouthWest;
-                }
+                float yValue = closestBlockDown.transform.position.y + closestBlockDown.transform.localScale.x;
 
-                if(closestBlockObjectDown != null)
-                {
-                    Block closestBlockDown = closestBlockObjectDown.GetComponent<Block>();
+                currentBlock.target = new Vector3(closestBlockDown.transform.position.x, yValue + padding, closestBlockDown.transform.position.z);
+                currentBlock.isMove = true;
+            }
+            else if (currentBlock.transform.localScale.x > closestBlockDown.transform.localScale.x)
+            {
+                var scaleDiff = currentBlockObject.gameObject.transform.localScale.x / closestBlockObjectDown.gameObject.transform.localScale.x;
 
-                    if (closestBlockObjectDown.transform.localScale.x == currentBlock.transform.localScale.x)
-                    {
-                        float yValue = closestBlockDown.transform.position.y + closestBlockDown.transform.localScale.x;
+                var xInc = scaleDiff + (scaleDiff / 2);
+                var xValue = currentBlockObject.transform.localScale.x * xInc;
+                var yValue = currentBlock.transform.localScale.x * (scaleDiff / 2);
 
-                        currentBlock.target = new Vector3(closestBlockDown.transform.position.x, yValue, closestBlockDown.transform.position.z);
-                        currentBlock.isMove = true;
-                    }
-                    else if (currentBlock.transform.localScale.x > closestBlockDown.transform.localScale.x)
-                    {
-                        var scaleDiff = currentBlockObject.gameObject.transform.localScale.x / closestBlockObjectDown.gameObject.transform.localScale.x;
+                currentBlock.target = new Vector3(xValue, yValue + padding, currentBlock.transform.position.z);
+                currentBlock.isMove = true;
+            }
+            else if (closestBlockDown.transform.localScale.x > currentBlock.transform.localScale.x)
+            {
+                float scaleDiff = closestBlockDown.transform.localScale.x / currentBlock.transform.localScale.x;
+                var xValue = currentBlock.initialPos.x - closestBlockDown.transform.localScale.x;
+                var yValue = closestBlockDown.transform.localScale.x / (scaleDiff * 2);
 
-                        var xInc = scaleDiff + (scaleDiff / 2);
-                        var xValue = currentBlockObject.transform.localScale.x * xInc;
-                        var yValue = currentBlock.transform.localScale.x * (scaleDiff / 2);
+                currentBlock.target = new Vector3(xValue, yValue + padding, currentBlockObject.transform.position.z);
+                currentBlock.isMove = true;
+            }
+        }
+        else if (closestBlockObjectUp != null)
+        {
+            Debug.Log("Closest Block Up : " + closestBlockObjectUp.name);
+            Block closestBlockUp = closestBlockObjectUp.GetComponent<Block>();
 
-                        currentBlock.target = new Vector3(xValue, yValue, currentBlock.transform.position.z);
-                        currentBlock.isMove = true;
-                    }
-                    else if (closestBlockDown.transform.localScale.x > currentBlock.transform.localScale.x)
-                    {
-                        float scaleDiff = closestBlockDown.transform.localScale.x / currentBlock.transform.localScale.x;
-                        var xValue = currentBlock.initialPos.x - closestBlockDown.transform.localScale.x;
-                        var yValue = closestBlockDown.transform.localScale.x / (scaleDiff * 2);
+            if (closestBlockObjectUp.transform.localScale.x == currentBlock.transform.localScale.x)
+            {
+                float yValue = closestBlockUp.transform.position.y - closestBlockUp.transform.localScale.x;
 
-                        currentBlock.target = new Vector3(xValue, yValue, currentBlockObject.transform.position.z);
-                        currentBlock.isMove = true;
-                    }
-                }
-                else if(closestBlockObjectUp != null)
-                {
-                    Block closestBlockUp = closestBlockObjectUp.GetComponent<Block>();
+                currentBlock.target = new Vector3(closestBlockUp.transform.position.x, yValue - padding, closestBlockUp.transform.position.z);
+                currentBlock.isMove = true;
+            }
+            else if (currentBlock.transform.localScale.x > closestBlockUp.transform.localScale.x)
+            {
+                Debug.Log("Current Block is Bigger Size! " + closestBlockUp.name);
+                var scaleDiff = currentBlockObject.gameObject.transform.localScale.x / closestBlockUp.gameObject.transform.localScale.x;
 
-                    if (closestBlockObjectUp.transform.localScale.x == currentBlock.transform.localScale.x)
-                    {
-                        // This is for bottom
-                        float yValue = closestBlockUp.transform.position.y - closestBlockUp.transform.localScale.x;
+                var xValue = -currentBlockObject.transform.localScale.x;
+                var yValue = -(currentBlockObject.transform.localScale.x * (scaleDiff / 2));
 
-                        currentBlock.target = new Vector3(closestBlockUp.transform.position.x, yValue, closestBlockUp.transform.position.z);
-                        currentBlock.isMove = true;
-                    }
-                    else if (currentBlock.transform.localScale.x > closestBlockUp.transform.localScale.x)
-                    {
-                        Debug.Log("Current Block is Bigger Size! " + closestBlockUp.name);
-                        var scaleDiff = currentBlockObject.gameObject.transform.localScale.x / closestBlockUp.gameObject.transform.localScale.x;
+                currentBlock.target = new Vector3(xValue, yValue - padding, currentBlock.transform.position.z);
+                currentBlock.isMove = true;
+            }
+            else if (closestBlockUp.transform.localScale.x > currentBlock.transform.localScale.x)
+            {
+                Debug.Log("Closest Block is Bigger Size! " + closestBlockUp.name);
+                float scaleDiff = closestBlockUp.transform.localScale.x / currentBlock.transform.localScale.x;
+                var xValue = currentBlock.initialPos.x - closestBlockUp.transform.localScale.x;
+                var yValue = closestBlockUp.transform.localScale.x / (scaleDiff * 2);
 
-                        var xValue = - currentBlockObject.transform.localScale.x;
-                        var yValue = - (currentBlockObject.transform.localScale.x * (scaleDiff / 2));
-
-                        currentBlock.target = new Vector3(xValue, yValue, currentBlock.transform.position.z);
-                        currentBlock.isMove = true;
-                    }
-                    else if (closestBlockUp.transform.localScale.x > currentBlock.transform.localScale.x)
-                    {
-                        Debug.Log("Closest Block is Bigger Size! " + closestBlockUp.name);
-                        float scaleDiff = closestBlockUp.transform.localScale.x / currentBlock.transform.localScale.x;
-                        var xValue = currentBlock.initialPos.x - closestBlockUp.transform.localScale.x;
-                        var yValue = closestBlockUp.transform.localScale.x / (scaleDiff * 2);
-
-                        currentBlock.target = new Vector3(xValue, yValue, currentBlockObject.transform.position.z);
-                        currentBlock.isMove = true;
-                    }
-                }
+                currentBlock.target = new Vector3(xValue, yValue - padding, currentBlockObject.transform.position.z);
+                currentBlock.isMove = true;
             }
         }
 
-        if(currentBlock.isMove)
+        if (currentBlock.isMove)
         {
             Move(currentBlock, currentBlock.target);
+
+            if (CannotMoveToNewPosition(currentBlock))
+                Debug.Log("Can Move!");
         }
     }
     void Move(Block blck, Vector3 target)
@@ -310,7 +315,23 @@ public class BlockManager : MonoBehaviour
             Mathf.Approximately(pos.z, target.z))
         {
             blck.isMove = false;
+            blck.isRayGap = false;
         }
+    }
+    bool CannotMoveToNewPosition(Block block)
+    {
+        float positionTolerance = 0.001f; // Adjust the tolerance as needed
+
+        for (int i = 0; i < allBlocks.Count; i++)
+        {
+            // Check if the target has a block
+            if (Vector3.Distance(allBlocks[i].transform.position, block.target) < positionTolerance)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
     // Get Majority Of Blocks
     void FindMajority()

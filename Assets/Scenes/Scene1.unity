@@ -918,7 +918,7 @@ MonoBehaviour:
   whiteMaterial: {fileID: 2100000, guid: 43a375ddce84717459058ac3ba2a7653, type: 2}
   blackMaterial: {fileID: 2100000, guid: f0ff00f0a48b2bc4e8501bf34894079c, type: 2}
   moveSpeed: 1
-  padding: 0
+  padding: 0.01
   sameColorSplit: 1
   isInvertedSwipe: 1
   splitNumber: 0
@@ -1069,6 +1069,8 @@ MonoBehaviour:
   rayColor: {r: 1, g: 0, b: 0, a: 1}
   target: {x: 0, y: 0, z: 0}
   isMove: 0
+  isRayGap: 0
+  isAvailableDiagonals: 0
   isWhite: 0
   isBlack: 1
 --- !u!1 &1575438934
@@ -1089,7 +1091,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1575438935
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1542,7 +1544,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1906416736
 RectTransform:
   m_ObjectHideFlags: 0
