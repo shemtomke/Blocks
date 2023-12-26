@@ -1,12 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using TMPro;
 using UnityEngine;
+using System;
+using System.Collections.Generic;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-using static UnityEngine.GraphicsBuffer;
 
 public class BlockManager : MonoBehaviour
 {
@@ -189,11 +184,8 @@ public class BlockManager : MonoBehaviour
     #region Move Block
     // If during the game a block is away diagonally from everything move it closer to the closest neighbour.
     // This is an in game mechanic outside of the player's control
-    public void CheckDiagonalSide(Block currentBlock, GameObject closestBlockObjectDown, GameObject closestBlockObjectUp)
+    public void CheckDiagonalSide(Block currentBlock, ref GameObject closestBlockObjectDown, ref GameObject closestBlockObjectUp)
     {
-        if (currentBlock == null)
-            return;
-
         if (currentBlock.closesBlockSouthEast != null)
         {
             closestBlockObjectDown = currentBlock.closesBlockSouthEast;
@@ -211,13 +203,13 @@ public class BlockManager : MonoBehaviour
             closestBlockObjectDown = currentBlock.closesBlockSouthWest;
         }
     }
-    public void CheckVerticalConnection(Block currentBlock, GameObject closestBlockObjectDown, GameObject closestBlockObjectUp)
+    public void CheckVerticalConnection(Block currentBlock, ref GameObject closestBlockObjectDown, ref GameObject closestBlockObjectUp)
     {
         if (closestBlockObjectDown != null)
         {
             Block closestBlockDown = closestBlockObjectDown.GetComponent<Block>();
 
-            // Check if there is no block on top
+            // Check if there is no block on top and it is not destroyed
             if (closestBlockDown.normalClosestBlockUp != null)
             {
                 closestBlockObjectDown = currentBlock.closestBlockDown;
@@ -227,20 +219,20 @@ public class BlockManager : MonoBehaviour
         {
             Block closestBlockUp = closestBlockObjectUp.GetComponent<Block>();
 
-            // Check if there is no block in the bottom
+            // Check if there is no block in the bottom and it is not destroyed
             if (closestBlockUp.normalClosestBlockDown != null)
             {
-                closestBlockObjectDown = currentBlock.closestBlockUp;
+                closestBlockObjectUp = currentBlock.closestBlockUp;
             }
         }
     }
-    public void CheckAvailableDiagonals(Block currentBlock, GameObject closestBlockObjectDown, GameObject closestBlockObjectUp)
+    // When Diagonals are missing
+    public void CheckAvailableBlocks(Block currentBlock, ref GameObject closestBlockObjectDown, 
+        ref GameObject closestBlockObjectUp, ref GameObject closestBlockObjectLeft, ref GameObject closestBlockObjectRight)
     {
-        if (currentBlock == null)
-            return;
-
         if (!currentBlock.isAvailableDiagonals)
         {
+            // CheckUp & Down Verticals
             if (currentBlock.closestBlockDown != null)
             {
                 closestBlockObjectDown = currentBlock.closestBlockDown;
@@ -249,17 +241,47 @@ public class BlockManager : MonoBehaviour
             {
                 closestBlockObjectUp = currentBlock.closestBlockUp;
             }
-            else if (currentBlock.closestBlockRight != null)
+            // What if we have both up and down?
+            else if(currentBlock.closestBlockUp != null && currentBlock.closestBlockDown != null)
             {
-                closestBlockObjectUp = currentBlock.closesBlockNorthWest;
+                int randomIndex = UnityEngine.Random.Range(0, 2);
+                if (randomIndex == 0)
+                {
+                    closestBlockObjectDown = currentBlock.closestBlockDown;
+                }
+                else
+                {
+                    closestBlockObjectUp = currentBlock.closestBlockUp;
+                }
             }
-            else if (currentBlock.closestBlockLeft != null)
+
+            // If both closest object down and up are null
+            if (closestBlockObjectDown == null && closestBlockObjectUp == null)
             {
-                closestBlockObjectDown = currentBlock.closesBlockSouthWest;
+                if (currentBlock.closestBlockRight != null)
+                {
+                    closestBlockObjectRight = currentBlock.closestBlockRight;
+                }
+                else if (currentBlock.closestBlockLeft != null)
+                {
+                    closestBlockObjectLeft = currentBlock.closestBlockLeft;
+                }
+                else if(currentBlock.closestBlockRight != null && currentBlock.closestBlockLeft != null)
+                {
+                    int randomIndex = UnityEngine.Random.Range(0, 2);
+                    if (randomIndex == 0)
+                    {
+                        closestBlockObjectLeft = currentBlock.closestBlockLeft;
+                    }
+                    else
+                    {
+                        closestBlockObjectRight = currentBlock.closestBlockRight;
+                    }
+                }
             }
         }
     }
-    void PositionBlockDown(Block currentBlock, GameObject closestBlockObjectDown)
+    void PositionBlockUp(Block currentBlock, ref GameObject closestBlockObjectDown)
     {
         if (closestBlockObjectDown != null)
         {
@@ -271,7 +293,7 @@ public class BlockManager : MonoBehaviour
 
                 currentBlock.target = new Vector3(closestBlockDown.transform.position.x, yValue + padding, closestBlockDown.transform.position.z);
                 currentBlock.isMove = true;
-            }
+            } //Solved
             else if (currentBlock.transform.localScale.x > closestBlockDown.transform.localScale.x)
             {
                 var scaleDiff = currentBlock.gameObject.transform.localScale.x / closestBlockObjectDown.gameObject.transform.localScale.x;
@@ -285,32 +307,39 @@ public class BlockManager : MonoBehaviour
             }
             else if (closestBlockDown.transform.localScale.x > currentBlock.transform.localScale.x)
             {
-                float scaleDiff = closestBlockDown.transform.localScale.x / currentBlock.transform.localScale.x;
-                var xValue = currentBlock.initialPos.x - closestBlockDown.transform.localScale.x;
+                float scaleDiffFloat = closestBlockDown.transform.localScale.x / currentBlock.transform.localScale.x;
+                // Explicitly cast the float value to an int
+                int scaleDiff = (int)scaleDiffFloat;
+
+                float xValue = 0;
+                if(closestBlockObjectDown == currentBlock.closesBlockSouthEast) //Right
+                    xValue = XBlock(scaleDiff, closestBlockObjectDown, false);
+                else if(closestBlockObjectDown == currentBlock.closesBlockSouthWest) //Left
+                    xValue = XBlock(scaleDiff, closestBlockObjectDown, true);
+                else
+                    xValue = XBlock(scaleDiff, closestBlockObjectDown, true);
+
                 var yValue = closestBlockDown.transform.localScale.x / (scaleDiff * 2);
 
                 currentBlock.target = new Vector3(xValue, yValue + padding, currentBlock.transform.position.z);
                 currentBlock.isMove = true;
-            }
+            } //Solved
         }
     }
-    void PositionBlockUp(Block currentBlock, GameObject closestBlockObjectUp)
+    void PositionBlockDown(Block currentBlock, ref GameObject closestBlockObjectUp)
     {
         if (closestBlockObjectUp != null)
         {
-            Debug.Log("Closest Block Up : " + closestBlockObjectUp.name);
             Block closestBlockUp = closestBlockObjectUp.GetComponent<Block>();
-
             if (closestBlockObjectUp.transform.localScale.x == currentBlock.transform.localScale.x)
             {
                 float yValue = closestBlockUp.transform.position.y - closestBlockUp.transform.localScale.x;
 
                 currentBlock.target = new Vector3(closestBlockUp.transform.position.x, yValue - padding, closestBlockUp.transform.position.z);
                 currentBlock.isMove = true;
-            }
+            } //Solved
             else if (currentBlock.transform.localScale.x > closestBlockUp.transform.localScale.x)
             {
-                Debug.Log("Current Block is Bigger Size! " + closestBlockUp.name);
                 var scaleDiff = currentBlock.gameObject.transform.localScale.x / closestBlockUp.gameObject.transform.localScale.x;
 
                 var xValue = -currentBlock.transform.localScale.x;
@@ -321,9 +350,9 @@ public class BlockManager : MonoBehaviour
             }
             else if (closestBlockUp.transform.localScale.x > currentBlock.transform.localScale.x)
             {
-                Debug.Log("Closest Block is Bigger Size! " + closestBlockUp.name);
                 float scaleDiff = closestBlockUp.transform.localScale.x / currentBlock.transform.localScale.x;
                 var xValue = currentBlock.initialPos.x - closestBlockUp.transform.localScale.x;
+
                 var yValue = closestBlockUp.transform.localScale.x / (scaleDiff * 2);
 
                 currentBlock.target = new Vector3(xValue, yValue - padding, currentBlock.transform.position.z);
@@ -331,14 +360,93 @@ public class BlockManager : MonoBehaviour
             }
         }
     }
+    float XBlock(int diff, GameObject closestGameObject, bool isLeft)
+    {
+        Vector3 pos = closestGameObject.transform.position;
+        Vector3 scale = closestGameObject.transform.localScale;
+
+        GameObject topLeftCube = null;
+        GameObject topRightCube = null;
+        GameObject bottomLeftCube = null;
+        GameObject bottomRightCube = null;
+
+        for (int i = 0; i < diff; i++)
+        {
+            for (int j = 0; j < diff; j++)
+            {
+                for (int k = 0; k < diff; k++)
+                {
+                    Vector3 spawnPosition = pos +
+                        new Vector3((i - 0.5f) * (scale.x * splitFactor + padding),
+                                    (j - 0.5f) * (scale.y * splitFactor + padding),
+                                    (k - 0.5f) * (scale.z * splitFactor + padding));
+
+                    GameObject smallerCube = Instantiate(smallerCubePrefab, spawnPosition, Quaternion.identity);
+                    smallerCube.SetActive(false);
+
+                    if (i == 0 && j == 0 && k == 0)
+                    {
+                        topLeftCube = smallerCube;
+                    }
+                    else if (i == diff - 1 && j == 0 && k == 0)
+                    {
+                        topRightCube = smallerCube;
+                    }
+                    else if (i == 0 && j == 0 && k == diff - 1)
+                    {
+                        bottomLeftCube = smallerCube;
+                    }
+                    else if (i == diff - 1 && j == diff - 1 && k == diff - 1)
+                    {
+                        bottomRightCube = smallerCube;
+                    }
+                    else
+                    {
+                        Destroy(smallerCube);
+                    }
+                }
+            }
+        }
+
+        Debug.Log("TOP LEFT X : " + topLeftCube.transform.position.x);
+        Debug.Log("TOP RIGHt X : " + topRightCube.transform.position.x);
+        Debug.Log("BOTTOM LEFT X : " + bottomLeftCube.transform.position.x);
+        Debug.Log("BOTTOM RIGHT X : " + bottomRightCube.transform.position.x);
+
+        return topRightCube.transform.position.x;
+    }
+    // from right
+    void PositionBlockLeft(Block currentBlock, ref GameObject closestBlockObjectLeft)
+    {
+        if (closestBlockObjectLeft != null)
+        {
+            Block closestBlockLeft = closestBlockObjectLeft.GetComponent<Block>();
+
+            float xValue = closestBlockLeft.transform.position.x + closestBlockLeft.transform.localScale.x;
+            float yValue = closestBlockLeft.transform.position.y;
+
+            currentBlock.target = new Vector3(xValue - padding, yValue, closestBlockLeft.transform.position.z);
+            currentBlock.isMove = true;
+        }
+    }
+    void PositionBlockRight(Block currentBlock, ref GameObject closestBlockObjectRight)
+    {
+        if (closestBlockObjectRight != null)
+        {
+            Block closestBlockRight = closestBlockObjectRight.GetComponent<Block>();
+
+            float xValue = closestBlockRight.transform.position.x - closestBlockRight.transform.localScale.x;
+            float yValue = closestBlockRight.transform.position.y;
+
+            currentBlock.target = new Vector3(xValue + padding, yValue, closestBlockRight.transform.position.z);
+            currentBlock.isMove = true;
+        }
+    }
     void PrepareMove(Block currentBlock)
     {
         if (currentBlock.isMove)
         {
             Move(currentBlock, currentBlock.target);
-
-            if (CannotMoveToNewPosition(currentBlock))
-                Debug.Log("Can Move!");
         }
     }
     public void MoveBlockCloser(Block currentBlock)
@@ -353,15 +461,20 @@ public class BlockManager : MonoBehaviour
 
         GameObject closestBlockObjectUp = null;
         GameObject closestBlockObjectDown = null;
+        GameObject closestBlockObjectLeft = null;
+        GameObject closestBlockObjectRight = null;
 
-        // Check Diagonal Side
-        CheckDiagonalSide(currentBlock, closestBlockObjectDown, closestBlockObjectUp);
-        CheckAvailableDiagonals(currentBlock, closestBlockObjectDown, closestBlockObjectUp);
-        CheckVerticalConnection(currentBlock, closestBlockObjectDown, closestBlockObjectUp);
+        CheckDiagonalSide(currentBlock, ref closestBlockObjectDown, ref closestBlockObjectUp);
+        CheckAvailableBlocks(currentBlock, ref closestBlockObjectDown, ref closestBlockObjectUp, 
+                                            ref closestBlockObjectLeft, ref closestBlockObjectRight);
+
+        CheckVerticalConnection(currentBlock, ref closestBlockObjectDown, ref closestBlockObjectUp);
 
         // Position Blocks
-        PositionBlockUp(currentBlock, closestBlockObjectUp);
-        PositionBlockDown(currentBlock, closestBlockObjectDown);
+        PositionBlockUp(currentBlock, ref closestBlockObjectDown);
+        PositionBlockDown(currentBlock, ref closestBlockObjectUp);
+        PositionBlockLeft(currentBlock, ref closestBlockObjectLeft);
+        PositionBlockRight(currentBlock, ref closestBlockObjectRight);
 
         PrepareMove(currentBlock);
     }

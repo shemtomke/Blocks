@@ -298,13 +298,21 @@ MonoBehaviour:
   closestBlockDown: {fileID: 0}
   closestBlockLeft: {fileID: 0}
   closestBlockRight: {fileID: 0}
+  normalClosestBlockUp: {fileID: 0}
+  normalClosestBlockDown: {fileID: 0}
+  normalClosestBlockLeft: {fileID: 0}
+  normalClosestBlockRight: {fileID: 0}
   closesBlockNorthWest: {fileID: 0}
   closesBlockNorthEast: {fileID: 0}
   closesBlockSouthEast: {fileID: 0}
   closesBlockSouthWest: {fileID: 0}
-  rayDistance: 4
+  rayDistance: 2
+  rayGap: 0
+  connectedBlocks: 0
   rayColor: {r: 1, g: 0, b: 0, a: 1}
-  isMove: 0
   target: {x: 0, y: 0, z: 0}
+  isMove: 0
+  isRayGap: 0
+  isAvailableDiagonals: 0
   isWhite: 0
   isBlack: 0
