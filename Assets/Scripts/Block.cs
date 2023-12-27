@@ -26,6 +26,7 @@ public class Block : MonoBehaviour
     public GameObject closesBlockSouthWest;
 
     [Space(10)]
+    public float sphereRadius = 0.2f;
     public float rayDistance = 2f;
     public float rayGap;
     private float dragThreshold = 10f; // Adjust this value to set the drag sensitivity
@@ -35,6 +36,11 @@ public class Block : MonoBehaviour
     public Vector3 target;
     private Vector3 dragStartPos;
     private Vector3 dragEndPos;
+
+    public Vector3 northeastDiagonal;
+    public Vector3 northwestDiagonal;
+    public Vector3 southeastDiagonal;
+    public Vector3 southwestDiagonal;
 
     public bool isMove = false;
     public bool isRayGap = false;
@@ -112,34 +118,44 @@ public class Block : MonoBehaviour
     }
     private void Update()
     {
-        // Cast rays in four directions from the center of the object
-        CastRay(Vector3.up, ref closestBlockUp, rayDistance);
-        CastRay(Vector3.down, ref closestBlockDown, rayDistance);
-        CastRay(Vector3.left, ref closestBlockLeft, rayDistance);
-        CastRay(Vector3.right, ref closestBlockRight, rayDistance);
+        if(!isMove)
+        {
+            CastRay(northeastDiagonal, ref closesBlockNorthEast, rayDistance);
+            CastRay(northwestDiagonal, ref closesBlockNorthWest, rayDistance);
+            CastRay(southeastDiagonal, ref closesBlockSouthEast, rayDistance);
+            CastRay(southwestDiagonal, ref closesBlockSouthWest, rayDistance);
 
-        // This will show if we have a gap with the next cube if null
-        BoxCastRay(Vector3.up, ref normalClosestBlockUp, rayGap);
-        BoxCastRay(Vector3.down, ref normalClosestBlockDown, rayGap);
-        BoxCastRay(Vector3.left, ref normalClosestBlockLeft, rayGap);
-        BoxCastRay(Vector3.right, ref normalClosestBlockRight, rayGap);
+            // Cast rays in four directions from the center of the object
+            CastRay(Vector3.up, ref closestBlockUp, rayDistance);
+            CastRay(Vector3.down, ref closestBlockDown, rayDistance);
+            CastRay(Vector3.left, ref closestBlockLeft, rayDistance);
+            CastRay(Vector3.right, ref closestBlockRight, rayDistance);
 
-        // This will allow movement to the neighbouring block
-        Vector3 northeastDiagonal = new Vector3(1f, 1f, 0f).normalized;
-        Vector3 northwestDiagonal = new Vector3(-1f, 1f, 0f).normalized;
-        Vector3 southeastDiagonal = new Vector3(1f, -1f, 0f).normalized;
-        Vector3 southwestDiagonal = new Vector3(-1f, -1f, 0f).normalized;
+            // This will show if we have a gap with the next cube if null
+            BoxCastRay(Vector3.up, ref normalClosestBlockUp, rayGap);
+            BoxCastRay(Vector3.down, ref normalClosestBlockDown, rayGap);
+            BoxCastRay(Vector3.left, ref normalClosestBlockLeft, rayGap);
+            BoxCastRay(Vector3.right, ref normalClosestBlockRight, rayGap);
 
-        CastRay(northeastDiagonal, ref closesBlockNorthEast, rayDistance);
-        CastRay(northwestDiagonal, ref closesBlockNorthWest, rayDistance);
-        CastRay(southeastDiagonal, ref closesBlockSouthEast, rayDistance);
-        CastRay(southwestDiagonal, ref closesBlockSouthWest, rayDistance);
-
-        AllRaysGapEmpty();
-        NoDiagonals();
-        AvailableDiagonals();
+            AllRaysGapEmpty();
+            NoDiagonals();
+            AvailableDiagonals();
+        }
 
         blockManager.MoveBlockCloser(this);
+    }
+    void OnDrawGizmos()
+    {
+        //Vector3 northeastDiagonal = new Vector3(1f, 1f, 0f).normalized;
+        //Vector3 northwestDiagonal = new Vector3(-1f, 1f, 0f).normalized;
+        //Vector3 southeastDiagonal = new Vector3(1f, -1f, 0f).normalized;
+        //Vector3 southwestDiagonal = new Vector3(-1f, -1f, 0f).normalized;
+
+        //Gizmos.color = Color.red;
+        //Gizmos.DrawSphere(transform.position - northeastDiagonal * rayDistance, sphereRadius);
+        //Gizmos.DrawSphere(transform.position - northwestDiagonal * rayDistance, sphereRadius);
+        //Gizmos.DrawSphere(transform.position - southeastDiagonal * rayDistance, sphereRadius);
+        //Gizmos.DrawSphere(transform.position - southwestDiagonal * rayDistance, sphereRadius);
     }
     public void CastRay(Vector3 direction, ref GameObject closestBlock, float rayDist)
     {
@@ -156,7 +172,6 @@ public class Block : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, rayDist))
         {
-            // Check if the hit object has the "Block" tag
             if (hit.collider.CompareTag("Block"))
             {
                 closestBlock = hit.collider.gameObject;
@@ -180,7 +195,19 @@ public class Block : MonoBehaviour
             }
         }
     }
-
+    public void SphereCastRay(Vector3 direction, ref GameObject closestBlock, float radius, float rayDist)
+    {
+        Vector3 rayOrigin = transform.position;
+        RaycastHit hit;
+        if (Physics.SphereCast(rayOrigin, radius, direction, out hit, rayDist))
+        {
+            // Your code for handling the hit
+            if (hit.collider.CompareTag("Block"))
+            {
+                closestBlock = hit.collider.gameObject;
+            }
+        }
+    }
     // if the ray gap is empty then there is a gap between, meaning it should move to the closest neighbour
     public void AllRaysGapEmpty()
     {

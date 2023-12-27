@@ -299,7 +299,7 @@ public class BlockManager : MonoBehaviour
                 var scaleDiff = currentBlock.gameObject.transform.localScale.x / closestBlockObjectDown.gameObject.transform.localScale.x;
 
                 var xInc = scaleDiff + (scaleDiff / 2);
-                var xValue = currentBlock.transform.localScale.x * xInc;
+                var xValue = closestBlockDown.transform.localScale.x * xInc;
                 var yValue = currentBlock.transform.localScale.x * (scaleDiff / 2);
 
                 currentBlock.target = new Vector3(xValue, yValue + padding, currentBlock.transform.position.z);
@@ -308,7 +308,6 @@ public class BlockManager : MonoBehaviour
             else if (closestBlockDown.transform.localScale.x > currentBlock.transform.localScale.x)
             {
                 float scaleDiffFloat = closestBlockDown.transform.localScale.x / currentBlock.transform.localScale.x;
-                // Explicitly cast the float value to an int
                 int scaleDiff = (int)scaleDiffFloat;
 
                 float xValue = 0;
@@ -342,22 +341,31 @@ public class BlockManager : MonoBehaviour
             {
                 var scaleDiff = currentBlock.gameObject.transform.localScale.x / closestBlockUp.gameObject.transform.localScale.x;
 
-                var xValue = -currentBlock.transform.localScale.x;
+                var xInc = scaleDiff + (scaleDiff / 2);
+                var xValue = closestBlockUp.transform.localScale.x * xInc;
                 var yValue = -(currentBlock.transform.localScale.x * (scaleDiff / 2));
 
                 currentBlock.target = new Vector3(xValue, yValue - padding, currentBlock.transform.position.z);
                 currentBlock.isMove = true;
             }
-            else if (closestBlockUp.transform.localScale.x > currentBlock.transform.localScale.x)
+            else if (closestBlockUp.transform.localScale.x > currentBlock.transform.localScale.x) // Solved
             {
-                float scaleDiff = closestBlockUp.transform.localScale.x / currentBlock.transform.localScale.x;
-                var xValue = currentBlock.initialPos.x - closestBlockUp.transform.localScale.x;
+                float scaleDiffFloat = closestBlockUp.transform.localScale.x / currentBlock.transform.localScale.x;
+                int scaleDiff = (int)scaleDiffFloat;
+
+                float xValue = 0;
+                if (closestBlockObjectUp == currentBlock.closesBlockNorthEast) //Right
+                    xValue = XBlock(scaleDiff, closestBlockObjectUp, false);
+                else if (closestBlockObjectUp == currentBlock.closesBlockNorthWest) //Left
+                    xValue = XBlock(scaleDiff, closestBlockObjectUp, true);
+                else
+                    xValue = XBlock(scaleDiff, closestBlockObjectUp, true);
 
                 var yValue = closestBlockUp.transform.localScale.x / (scaleDiff * 2);
 
                 currentBlock.target = new Vector3(xValue, yValue - padding, currentBlock.transform.position.z);
                 currentBlock.isMove = true;
-            }
+            } // Solved
         }
     }
     float XBlock(int diff, GameObject closestGameObject, bool isLeft)
@@ -365,10 +373,9 @@ public class BlockManager : MonoBehaviour
         Vector3 pos = closestGameObject.transform.position;
         Vector3 scale = closestGameObject.transform.localScale;
 
-        GameObject topLeftCube = null;
-        GameObject topRightCube = null;
-        GameObject bottomLeftCube = null;
-        GameObject bottomRightCube = null;
+        List<GameObject> cubes = new List<GameObject>();
+        GameObject leftCube = null;
+        GameObject rightCube = null;
 
         for (int i = 0; i < diff; i++)
         {
@@ -384,36 +391,28 @@ public class BlockManager : MonoBehaviour
                     GameObject smallerCube = Instantiate(smallerCubePrefab, spawnPosition, Quaternion.identity);
                     smallerCube.SetActive(false);
 
+                    cubes.Add(smallerCube);
                     if (i == 0 && j == 0 && k == 0)
                     {
-                        topLeftCube = smallerCube;
+                        leftCube = smallerCube;
                     }
                     else if (i == diff - 1 && j == 0 && k == 0)
                     {
-                        topRightCube = smallerCube;
-                    }
-                    else if (i == 0 && j == 0 && k == diff - 1)
-                    {
-                        bottomLeftCube = smallerCube;
-                    }
-                    else if (i == diff - 1 && j == diff - 1 && k == diff - 1)
-                    {
-                        bottomRightCube = smallerCube;
-                    }
-                    else
-                    {
-                        Destroy(smallerCube);
+                        rightCube = smallerCube;
                     }
                 }
             }
         }
 
-        Debug.Log("TOP LEFT X : " + topLeftCube.transform.position.x);
-        Debug.Log("TOP RIGHt X : " + topRightCube.transform.position.x);
-        Debug.Log("BOTTOM LEFT X : " + bottomLeftCube.transform.position.x);
-        Debug.Log("BOTTOM RIGHT X : " + bottomRightCube.transform.position.x);
+        float xValue = isLeft ? leftCube.transform.position.x : rightCube.transform.position.x;
 
-        return topRightCube.transform.position.x;
+        // Destroy all small cubes
+        for (int i = 0; i < cubes.Count; i++)
+        {
+            Destroy(cubes[i]);
+        }
+
+        return xValue;
     }
     // from right
     void PositionBlockLeft(Block currentBlock, ref GameObject closestBlockObjectLeft)

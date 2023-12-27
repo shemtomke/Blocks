@@ -1068,11 +1068,15 @@ MonoBehaviour:
   closesBlockNorthEast: {fileID: 0}
   closesBlockSouthEast: {fileID: 0}
   closesBlockSouthWest: {fileID: 0}
-  rayDistance: 3
+  sphereRadius: 0.05
+  rayDistance: 5
   rayGap: 0
-  connectedBlocks: 0
   rayColor: {r: 1, g: 0, b: 0, a: 1}
   target: {x: 0, y: 0, z: 0}
+  northeastDiagonal: {x: 1, y: 1, z: -0.02}
+  northwestDiagonal: {x: -1, y: 1, z: -0.02}
+  southeastDiagonal: {x: 1, y: -1, z: -0.02}
+  southwestDiagonal: {x: -1, y: -1, z: -0.02}
   isMove: 0
   isRayGap: 0
   isAvailableDiagonals: 0
